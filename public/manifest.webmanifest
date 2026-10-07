@@ -1,0 +1,17 @@
+{
+  "name": "The Gadget",
+  "short_name": "Gadget",
+  "description": "The Gadget — a glossy early-2000s media hub. Your music, games and homies, entirely on-device.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "icons": [
+    { "src": "/images/mascot.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/images/mascot.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/images/mascot.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

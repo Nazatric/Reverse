@@ -1,0 +1,126 @@
+/* ==========================================================================
+   The Gadget — tokens, reset, scene, atmosphere
+   ========================================================================== */
+
+:root {
+  --ink: #050505;
+  --text: #f2f2ef;
+  --dim: #a9aaa6;
+  --faint: #70716d;
+  --accent: #e9f33f;
+  --display: "Orbitron", "Michroma", "Arial Black", system-ui, sans-serif;
+  --text-font: "Exo 2", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --ease: cubic-bezier(0.16, 0.84, 0.24, 1);
+  --ease-io: cubic-bezier(0.65, 0, 0.25, 1);
+  --ease-spring: cubic-bezier(0.3, 1.4, 0.5, 1);
+
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+
+  /* live design tokens — Config and plugins write these */
+  --orb-scale: 1;
+  --hub-scale: 1;
+  --chain-scale: 1;
+  --label-scale: 1;
+  --glow: 1;
+
+  --gutter: max(18px, calc(40 * var(--u, 1px)));
+  --mini-h: 64px;
+  --chrome-h: calc(var(--sat) + 96px);
+
+  --glyph: #383937;
+  --glyph-hole: #9a9b98;
+  --glyph-dot: #d2d3cf;
+
+  color-scheme: dark;
+  font-family: var(--text-font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--ink);
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  width: 100%; height: 100%; margin: 0; padding: 0;
+  overflow: hidden; background: var(--ink); overscroll-behavior: none;
+}
+
+body {
+  color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+img, svg { -webkit-user-drag: none; }
+input, textarea { -webkit-user-select: text; user-select: text; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; touch-action: manipulation; }
+:focus-visible { outline: 2px solid rgba(255,255,255,0.9); outline-offset: 4px; border-radius: 12px; }
+::-webkit-scrollbar { display: none; }
+
+.scene { position: fixed; inset: 0; overflow: hidden; isolation: isolate; background: var(--ink); display: grid; }
+
+/* ---------- atmosphere ---------- */
+.bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.bg-layer { position: absolute; inset: 0; }
+.bg-photo {
+  position: absolute; inset: -5%;
+  background: url("/images/atmosphere.jpg") center / cover no-repeat;
+  filter: grayscale(1) contrast(1.14) brightness(0.68);
+  opacity: 0.5; mix-blend-mode: screen;
+  will-change: transform;
+  animation: bg-drift 70s ease-in-out infinite alternate;
+}
+.bg-glow {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(62% 46% at 38% 31%, rgba(196,198,193,0.2), transparent 70%),
+    radial-gradient(44% 34% at 75% 30%, rgba(165,168,162,0.14), transparent 70%),
+    radial-gradient(72% 40% at 50% 68%, rgba(122,124,120,0.1), transparent 72%),
+    radial-gradient(30% 22% at 8% 54%, rgba(186,188,183,0.13), transparent 70%);
+  animation: glow-breathe 16s ease-in-out infinite alternate;
+}
+.bg-streaks { position: absolute; inset: 0; overflow: hidden; }
+.bg-streak {
+  position: absolute; left: -25%; top: var(--y, 40%);
+  width: 150%; height: 14%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07) 38%, rgba(255,255,255,0.03) 62%, transparent);
+  transform: rotate(var(--r, 0deg)) translate3d(-6%, 0, 0);
+  animation: streak 30s ease-in-out infinite alternate;
+}
+.bg-streak--b { animation-duration: 42s; animation-direction: alternate-reverse; opacity: 0.8; }
+.bg-vignette { position: absolute; inset: 0; background: radial-gradient(ellipse 82% 72% at 50% 46%, transparent 38%, rgba(0,0,0,0.55) 76%, rgba(0,0,0,0.92) 100%); }
+.mote {
+  position: absolute; border-radius: 50%;
+  background: rgba(255,255,255,0.75);
+  box-shadow: 0 0 6px rgba(255,255,255,0.5);
+  opacity: 0; animation: mote linear infinite;
+}
+
+/* ---------- motion preferences ---------- */
+html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="off"] *::after {
+  animation-duration: 0.001ms !important; animation-delay: 0s !important;
+  animation-iteration-count: 1 !important; transition-duration: 0.001ms !important;
+}
+html[data-ambient="off"] .ambient { display: none; }
+html[data-sway="off"] .chain { animation: none; }
+html[data-sway="off"] .chain::after { display: none; }
+
+/* ---------- shared keyframes ---------- */
+@keyframes bg-drift { from { transform: scale(1.02) translate3d(-0.5%, -0.3%, 0); } to { transform: scale(1.07) translate3d(0.6%, 0.4%, 0); } }
+@keyframes glow-breathe { from { opacity: 0.82; } to { opacity: 1; } }
+@keyframes streak { from { transform: rotate(var(--r, 0deg)) translate3d(-7%, 0, 0); } to { transform: rotate(var(--r, 0deg)) translate3d(7%, 0, 0); } }
+@keyframes mote {
+  0% { opacity: 0; transform: translate3d(0,0,0); }
+  15% { opacity: 0.55; } 85% { opacity: 0.35; }
+  100% { opacity: 0; transform: translate3d(var(--dx, 0px), -130px, 0); }
+}
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes rise { from { opacity: 0; transform: translate3d(0, 24px, 0) scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-7px);} 50%{transform:translateX(6px);} 75%{transform:translateX(-3px);} }
+@keyframes pulse-soft { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
