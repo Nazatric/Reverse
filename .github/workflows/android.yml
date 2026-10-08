@@ -1,9 +1,9 @@
 # Builds the native Android port on GitHub's runners — the authoring sandbox has no Android SDK
 # and no route to Google Maven, so the runner is the source of truth for "does it compile".
 #
-# Runs on every push to the working branch: assembles debug + release APKs, runs the JVM unit
-# tests, and uploads the APKs as artifacts. The instrumented visual-parity capture runs in a
-# separate job on an emulator (see parity.yml once the capture test is wired up).
+# Runs on every push: assembles debug + release APKs, runs the JVM unit tests, uploads the APKs.
+# Compiler errors are re-emitted as `::error` workflow commands so they surface as check-run
+# annotations, readable through the GitHub REST API from constrained networks.
 name: Android build
 
 on:
@@ -37,16 +37,30 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.14.3"
-          cache-disabled: false
 
       - name: Assemble debug APK
-        run: gradle --no-daemon --stacktrace :app:assembleDebug
+        run: gradle --no-daemon --stacktrace :app:assembleDebug 2>&1 | tee -a /tmp/build.log; exit "${PIPESTATUS[0]}"
 
       - name: Assemble release APK
-        run: gradle --no-daemon :app:assembleRelease
+        run: gradle --no-daemon :app:assembleRelease 2>&1 | tee -a /tmp/build.log; exit "${PIPESTATUS[0]}"
 
       - name: Unit tests
-        run: gradle --no-daemon :app:testDebugUnitTest
+        run: gradle --no-daemon :app:testDebugUnitTest 2>&1 | tee -a /tmp/build.log; exit "${PIPESTATUS[0]}"
+
+      - name: Surface compiler errors as annotations
+        if: failure()
+        run: |
+          touch /tmp/build.log
+          grep -E '^e: ' /tmp/build.log | head -60 | while IFS= read -r line; do
+            loc="$(echo "$line" | sed -E 's/^e: (file:\/\/)?([^:]+\.kt):?[[:space:]]*\(?([0-9]+),?[[:space:]]*([0-9]+)\)?.*/\2 \3 \4/')"
+            file="$(echo "$loc" | awk '{print $1}')"
+            ln="$(echo "$loc" | awk '{print $2}')"
+            col="$(echo "$loc" | awk '{print $3}')"
+            msg="$(echo "$line" | sed -E 's/^e: (file:\/\/)?[^:]+\.kt:?[[:space:]]*\(?.*?\)?:? //' )"
+            rel="$(echo "$file" | sed -E 's|^.*/(app/src/.*)$|\1|')"
+            echo "::error file=android/$rel,line=${ln:-1},col=${col:-1}::$msg"
+          done
+          grep -E '^e: |FAILURE|Caused by' /tmp/build.log | head -80 || true
 
       - name: Upload APKs
         if: always()

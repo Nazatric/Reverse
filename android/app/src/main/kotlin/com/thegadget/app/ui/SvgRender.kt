@@ -53,6 +53,8 @@ data class SvgCss(
     val stroke: String? = null,
     val strokeWidth: Float? = null,
     val opacity: Float? = null,
+    /** CSS `vector-effect: non-scaling-stroke`: the width is in screen px, not user units. */
+    val nonScalingStroke: Boolean = false,
 )
 
 /** The SVG 1.1 default: fill is black unless a class or the element says otherwise. */
@@ -160,7 +162,7 @@ private fun DrawScope.drawPainted(
     if (strokeSpec != null && strokeSpec != "none" && strokeW != null) {
         val paint = Paint()
         paint.style = PaintingStyle.Stroke
-        paint.strokeWidth = strokeW * strokeScale
+        paint.strokeWidth = if (style?.nonScalingStroke == true) strokeW else strokeW * strokeScale
         paint.alpha = opacity * (el.strokeOpacity?.toFloatOrNull() ?: 1f)
         paint.strokeCap = cap(el.strokeLinecap ?: group.strokeLinecap)
         paint.strokeJoin = join(el.strokeLinejoin ?: group.strokeLinejoin)
