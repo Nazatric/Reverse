@@ -142,9 +142,7 @@ jobs:
   # ---------------------------------------------------------------------------
   parity-native:
     runs-on: ubuntu-latest
-    # The first attempt ran the full 60 minutes and was cancelled during emulator boot
-    # (software rendering on a hosted runner). Fail fast instead of burning an hour.
-    timeout-minutes: 35
+    timeout-minutes: 50
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4

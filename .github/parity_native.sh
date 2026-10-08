@@ -10,8 +10,9 @@ TEST_CLASS="${2:-com.thegadget.app.parity.BootSmokeTest}"
 DEST="parity/out/native/$VP"
 
 cd android
-# Bound the test at 12 minutes so the job (35 min cap) always reaches the reporting below.
-timeout -k 60 720 gradle --no-daemon :app:connectedDebugAndroidTest \
+# Build the APKs first so the bounded window below is spent running the test, not compiling.
+gradle --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest >/dev/null 2>&1 || true
+timeout -k 60 1500 gradle --no-daemon :app:connectedDebugAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class="$TEST_CLASS" \
   2>&1 | tee /tmp/instr.log
 RC="${PIPESTATUS[0]}"
