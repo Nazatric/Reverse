@@ -96,7 +96,9 @@ private fun DrawScope.drawElement(
 ) {
     val style = css(el.className)
     val path = el.toPath() ?: return
-    val transform = el.transform?.let { SvgTransform.parse(it) }
+    val transform = el.transform?.let { t ->
+        transformCache[t] ?: SvgTransform.parse(t).also { transformCache[t] = it }
+    }
 
     scope.drawIntoCanvas { canvas ->
         canvas.save()
@@ -154,7 +156,6 @@ private fun DrawScope.drawPainted(
         paint.style = PaintingStyle.Fill
         paint.alpha = opacity * (el.fillOpacity?.toFloatOrNull() ?: 1f)
         applyFill(paint, fillSpec, group, palette, variant, path.getBounds())
-        if (el.fillRule == "evenodd") path.fillType = PathFillType.EvenOdd
         // drawContext (not drawPath) so gradient shaders survive
         scope.drawContext.canvas.drawPath(path, paint)
     }
@@ -287,7 +288,33 @@ private fun DrawScope.drawText(
 /* ------------------------------------------------------------------- geometry */
 
 /** Build the Compose [Path] for an element; null for kinds with no drawable geometry. */
+// `renderSvgGroup` executes in the draw phase on every frame. Parsing each element's path string
+// again each frame (the wireframe alone has hundreds of commands) pegs the main thread on device,
+// which is what produced the startup ANR. Geometry is immutable once built, so cache it.
+private val pathCache = java.util.concurrent.ConcurrentHashMap<SvgElement, Path>()
+private val transformCache = java.util.concurrent.ConcurrentHashMap<String, SvgTransform>()
+
+/**
+ * Parse every element/clip path once, off the main thread, so the first hub frame (and every
+ * frame after) reads the cache instead of running [PathData.parse] on the render thread. Called
+ * from `GadgetApp.onCreate` on [kotlinx.coroutines.Dispatchers.Default].
+ */
+fun warmSvgCache() {
+    for (g in SvgPaths.groups) {
+        for (el in g.elements) el.toPath()
+        for (clip in g.clips) for (el in clip.elements) el.toPath()
+    }
+}
+
 fun SvgElement.toPath(): Path? {
+    pathCache[this]?.let { return it }
+    val built = buildPath() ?: return null
+    if (fillRule == "evenodd") built.fillType = androidx.compose.ui.graphics.PathFillType.EvenOdd
+    pathCache[this] = built
+    return built
+}
+
+private fun SvgElement.buildPath(): Path? {
     val p = Path()
     when (kind) {
         "path" -> {

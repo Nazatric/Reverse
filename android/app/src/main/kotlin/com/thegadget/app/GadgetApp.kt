@@ -26,6 +26,13 @@ class GadgetApp : Application() {
             override fun format(epochMillis: Long): String =
                 DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(epochMillis))
         }
+        // The hub/Backdrop draw extracted SVG every frame; parsing those path strings on the
+        // render thread is what stalls the main thread on device. Warm the cache off-main.
+        Thread { com.thegadget.app.ui.warmSvgCache() }.apply {
+            isDaemon = true
+            name = "gadget-svg-warm"
+            start()
+        }
         Thread.setDefaultUncaughtExceptionHandler { thread, error ->
             runCatching {
                 scope.launch { Stores(this@GadgetApp).setCrash("${error::class.java.simpleName}: ${error.message} @ ${thread.name}") }
