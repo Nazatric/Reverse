@@ -88,18 +88,20 @@ object Game2048 {
             }
             val list = line.filterNotNull()
 
+            // The destination of the n-th surviving tile is the n-th cell *in traversal order*,
+            // so for right/down it counts back from the far edge (`order[slot]`, not `slot`).
             var slot = 0
             var i = 0
             while (i < list.size) {
                 val current = list[i]
                 if (i + 1 < list.size && current.v == list[i + 1].v) {
-                    val (r, c) = row(slot)
+                    val (r, c) = row(order[slot])
                     result[r][c] = Tile(id = nextId(), v = current.v * 2, r = r, c = c, pop = true)
                     gained += current.v * 2
                     moved = true
                     i++
                 } else {
-                    val (r, c) = row(slot)
+                    val (r, c) = row(order[slot])
                     if (current.r != r || current.c != c) moved = true
                     result[r][c] = current.copy(r = r, c = c)
                 }

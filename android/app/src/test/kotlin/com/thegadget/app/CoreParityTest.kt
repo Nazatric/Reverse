@@ -88,8 +88,10 @@ class CoreParityTest {
     fun `titleFromFile strips one extension and turns underscores into spaces`() {
         assertEquals("never gonna give you up", GadgetText.titleFromFile("never_gonna_give_you_up.mp3"))
         assertEquals("a b", GadgetText.titleFromFile("a__b.flac"))
-        assertEquals("no_extension", GadgetText.titleFromFile("no_extension"))
-        assertEquals("dots kept", GadgetText.titleFromFile("dots.kept.m4a"))
+        // the web replaces runs of underscores whether or not there was an extension,
+        // and it never touches interior dots
+        assertEquals("no extension", GadgetText.titleFromFile("no_extension"))
+        assertEquals("dots.kept", GadgetText.titleFromFile("dots.kept.m4a"))
     }
 
     /* ------------------------------------------------------------------- library model */
@@ -110,9 +112,14 @@ class CoreParityTest {
 
     @Test
     fun `artRank prefers cover then front then album`() {
-        assertTrue(Library.artRank("cover.jpg") < Library.artRank("front.png"))
-        assertTrue(Library.artRank("front.png") < Library.artRank("album.jpg"))
+        // /^(cover|front)/ -> 0, /^(folder|album)/ -> 1, anything else -> 2:
+        // cover and front share a tier, so they must rank equal, not strictly ordered
+        assertEquals(Library.artRank("cover.jpg"), Library.artRank("front.png"))
+        assertEquals(Library.artRank("folder.jpg"), Library.artRank("album.jpg"))
+        assertTrue(Library.artRank("cover.jpg") < Library.artRank("album.jpg"))
         assertTrue(Library.artRank("album.jpg") < Library.artRank("random_art.png"))
+        assertEquals(0, Library.artRank("COVER.JPG"))
+        assertEquals(2, Library.artRank("random_art.png"))
     }
 
     @Test
@@ -161,6 +168,35 @@ class CoreParityTest {
         assertEquals(12, res.gained)
         val merged = res.tiles.filter { it.r == 0 }.sortedBy { it.c }
         assertEquals(listOf(4, 8), merged.map { it.v })
+    }
+
+    @Test
+    fun `each direction compacts toward its own edge`() {
+        // Regression: right/down must count slots back from the far edge, not from zero.
+        var id = 700
+        val single = { Tile(id++, 2, 0, 0) }
+
+        val left = Game2048.move(listOf(Tile(id, 2, 0, 3)), Direction.LEFT) { id++ }
+        assertEquals(0, left.tiles.single().c)
+
+        val right = Game2048.move(listOf(single()), Direction.RIGHT) { id++ }
+        assertEquals("right must push to column 3", 3, right.tiles.single().c)
+        assertTrue(right.moved)
+
+        val up = Game2048.move(listOf(Tile(id, 2, 3, 0)), Direction.UP) { id++ }
+        assertEquals(0, up.tiles.single().r)
+
+        val down = Game2048.move(listOf(single()), Direction.DOWN) { id++ }
+        assertEquals("down must push to row 3", 3, down.tiles.single().r)
+        assertTrue(down.moved)
+
+        // a right-aligned pair merges at the right edge and scores once
+        var m = 800
+        val pair = listOf(Tile(m++, 2, 0, 2), Tile(m++, 2, 0, 3))
+        val res = Game2048.move(pair, Direction.RIGHT) { m++ }
+        assertEquals(3, res.tiles.single().c)
+        assertEquals(4, res.tiles.single().v)
+        assertEquals(4, res.gained)
     }
 
     @Test
