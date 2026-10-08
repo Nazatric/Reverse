@@ -146,6 +146,7 @@ than glossed over, and none of them is claimed as parity anywhere in this reposi
 8. **MQTT has not been run against a live broker** in this environment.
 9. **Account statistics are computed but not displayed.**
 10. **`CollectionHero`, `Art` fallback disc, and the music pages' bespoke layouts** are simplified.
-11. **Startup ANR on device (fixed, needs retest).** The first real-device run ANR'd entering the hub
-    because the render thread parsed SVG path strings every frame. Fixed by caching + pre-warming;
-    confirmed only by compilation, not yet by a fresh device run.
+11. **Startup crash/ANR — fixed and verified on the emulator.** The first frame crashed with an
+    `ArrayIndexOutOfBoundsException` (SVG transform built as a 9-float 3x3 into Compose's 4x4
+    `Matrix`); separately the render thread re-parsed SVG every frame. Both fixed; the boot smoke
+    test now reports `BOOT_OK state=RESUMED` with a 412x915 screenshot and a clean logcat.

@@ -143,14 +143,13 @@ Until that diff is produced and reviewed, no parity percentage should be quoted,
   the Compose test rule and androidx.test runner on the classpath), but has not been executed on an
   emulator, so there are no runtime results for navigation, playback, SAF scanning, MQTT or plugin
   rendering.
-- Manual runtime testing: one real-device session was provided via screenshots. It showed a system
-  **ANR ("the gadget isn't responding") on entering the hub** after onboarding. The cause traced to
-  the render thread re-running `PathData.parse` on every extracted SVG element on every frame
-  (`renderSvgGroup` runs in the draw phase), so the first hub draw paid the full parse cost on the
-  main thread. Fixed by memoising path and transform parsing and pre-warming the cache, plus the
-  two typeface families, on a background thread at startup (`GadgetApp`, `ui/SvgRender.kt`). Build
-  and 31/31 unit tests are green after the fix, but the fix **needs a device retest to confirm** the
-  ANR is gone — CI cannot run an emulator reliably.
+- Manual runtime testing: a real-device session showed a startup ANR/crash. The emulator smoke test
+  then produced the definitive stack: `ArrayIndexOutOfBoundsException` in `AndroidCanvas.concat`
+  because the SVG transform was built as a 9-float 3x3 while Compose's `Matrix` is 4x4 — crashing the
+  first `Backdrop` frame on the main thread. Fixed (16-float matrix), plus the SVG parse memoisation /
+  off-main pre-warm. After the fix the instrumented boot test reports
+  **`BOOT_OK state=RESUMED png=412x915`** on the emulator with no ANR and no crash in logcat.
+- The onboarding gate was removed per the user: the app now drops straight into the hub on launch.
 
 ## 7. Remaining differences from the web app
 
