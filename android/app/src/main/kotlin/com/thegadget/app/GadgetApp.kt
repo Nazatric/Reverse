@@ -28,9 +28,20 @@ class GadgetApp : Application() {
         }
         // The hub/Backdrop draw extracted SVG every frame; parsing those path strings on the
         // render thread is what stalls the main thread on device. Warm the cache off-main.
-        Thread { com.thegadget.app.ui.warmSvgCache() }.apply {
+        Thread {
+            com.thegadget.app.ui.warmSvgCache()
+            // Warm the two typeface families so first text inflation is a cache hit, not a
+            // synchronous parse on the main thread.
+            for (res in listOf(
+                R.font.orbitron_400, R.font.orbitron_500, R.font.orbitron_600, R.font.orbitron_700,
+                R.font.orbitron_800, R.font.orbitron_900, R.font.exo2_300, R.font.exo2_400,
+                R.font.exo2_500, R.font.exo2_600, R.font.exo2_700,
+            )) {
+                runCatching { androidx.core.content.res.ResourcesCompat.getFont(this, res) }
+            }
+        }.apply {
             isDaemon = true
-            name = "gadget-svg-warm"
+            name = "gadget-warm"
             start()
         }
         Thread.setDefaultUncaughtExceptionHandler { thread, error ->
