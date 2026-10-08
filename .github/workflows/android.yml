@@ -47,6 +47,12 @@ jobs:
       - name: Unit tests
         run: gradle --no-daemon :app:testDebugUnitTest 2>&1 | tee -a /tmp/build.log; exit "${PIPESTATUS[0]}"
 
+      # The artifact store is not reachable from the authoring network, so the test report is
+      # re-emitted as annotations: which tests failed, with their assertion messages.
+      - name: Report unit test results
+        if: always()
+        run: python3 ../toolchain/report_tests.py app/build/test-results/testDebugUnitTest/*.xml
+
       - name: Instrumented test APK (parity harness compiles)
         run: gradle --no-daemon :app:assembleDebugAndroidTest 2>&1 | tee -a /tmp/build.log; exit "${PIPESTATUS[0]}"
 
