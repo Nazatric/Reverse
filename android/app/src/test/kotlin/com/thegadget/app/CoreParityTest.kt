@@ -25,7 +25,7 @@ import org.junit.Test
 
 /**
  * Parity tests for the ported core. Every expected value below is the behaviour of the web
- * implementation (`src/utils/**`, `src/state/nav.tsx`, `src/pages/Games/2048.tsx`,
+ * implementation (`src/utils` (all of it), `src/state/nav.tsx`, `src/pages/Games/2048.tsx`,
  * `src/utils/pluginSchema.ts`), so a regression here means the native app has drifted from the
  * source of truth rather than that a test was updated to match the code.
  */
@@ -347,5 +347,82 @@ class CoreParityTest {
             assertTrue("$name has no geometry", g.elements.isNotEmpty())
         }
         assertNull(SvgPaths.group("does.NotExist"))
+    }
+
+    // ---------------------------------------------------------------------
+    // The SFXR port behind the UI sounds (src/utils/audio.ts uses jsfxr)
+    // ---------------------------------------------------------------------
+
+    @Test
+    fun `the ui sound map matches the web presets and volumes`() {
+        val expected = mapOf(
+            "hover" to ("blipSelect" to 0.10),
+            "tap" to ("click" to 0.40),
+            "open" to ("powerUp" to 0.20),
+            "close" to ("jump" to 0.18),
+            "confirm" to ("pickupCoin" to 0.30),
+            "shake" to ("hitHurt" to 0.22),
+        )
+        assertEquals(expected.keys.toList(), com.thegadget.app.core.Sfxr.MAP.keys.toList())
+        for ((key, spec) in expected) {
+            assertEquals("$key preset", spec.first, com.thegadget.app.core.Sfxr.MAP[key]!!.first)
+            assertEquals("$key volume", spec.second, com.thegadget.app.core.Sfxr.MAP[key]!!.second, 1e-9)
+        }
+    }
+
+    @Test
+    fun `the haptic patterns match navigator vibrate calls`() {
+        val h = com.thegadget.app.core.Sfxr.HAPTICS
+        assertEquals(4, h.size)
+        assertTrue(h["tap"]!!.contentEquals(longArrayOf(8)))
+        assertTrue(h["open"]!!.contentEquals(longArrayOf(10)))
+        assertTrue(h["confirm"]!!.contentEquals(longArrayOf(14)))
+        assertTrue(h["shake"]!!.contentEquals(longArrayOf(20, 40, 20)))
+        // hover and close are sound-only in the web app
+        assertNull(h["hover"])
+        assertNull(h["close"])
+    }
+
+    @Test
+    fun `every ui sound synthesises finite bounded samples and is reproducible`() {
+        for ((key, spec) in com.thegadget.app.core.Sfxr.MAP) {
+            val a = com.thegadget.app.core.Sfxr.render(
+                com.thegadget.app.core.Sfxr.preset(spec.first, kotlin.random.Random(0x6AD6E7L)),
+                kotlin.random.Random(0x6AD6E7L),
+            )
+            val b = com.thegadget.app.core.Sfxr.render(
+                com.thegadget.app.core.Sfxr.preset(spec.first, kotlin.random.Random(0x6AD6E7L)),
+                kotlin.random.Random(0x6AD6E7L),
+            )
+            assertTrue("$key rendered nothing", a.isNotEmpty())
+            assertTrue("$key is not reproducible", a.contentEquals(b))
+            var peak = 0f
+            for (s in a) {
+                assertTrue("$key produced NaN", !s.isNaN())
+                if (kotlin.math.abs(s) > peak) peak = kotlin.math.abs(s)
+            }
+            assertTrue("$key is silent", peak > 0f)
+            assertTrue("$key clips past the sfxr gain envelope ($peak)", peak < 8f)
+        }
+    }
+
+    @Test
+    fun `preset parameters follow the sfxr definitions`() {
+        val r = kotlin.random.Random(1)
+        val coin = com.thegadget.app.core.Sfxr.pickupCoin(r)
+        assertEquals(com.thegadget.app.core.Sfxr.SAWTOOTH, coin.waveType)
+        assertTrue("base freq range", coin.baseFreq >= 0.4 && coin.baseFreq <= 0.9)
+        assertTrue("punch range", coin.envPunch >= 0.3 && coin.envPunch <= 0.6)
+
+        val jump = com.thegadget.app.core.Sfxr.jump(kotlin.random.Random(1))
+        assertEquals(com.thegadget.app.core.Sfxr.SQUARE, jump.waveType)
+        assertTrue("jump slides up", jump.freqRamp >= 0.1 && jump.freqRamp <= 0.3)
+
+        val hurt = com.thegadget.app.core.Sfxr.hitHurt(kotlin.random.Random(1))
+        assertFalse("hitHurt is never a sine", hurt.waveType == com.thegadget.app.core.Sfxr.SINE)
+        assertTrue("hitHurt slides down", hurt.freqRamp < 0)
+
+        val blip = com.thegadget.app.core.Sfxr.blipSelect(kotlin.random.Random(1))
+        assertEquals("blipSelect high-pass", 0.1, blip.hpfFreq, 1e-9)
     }
 }
