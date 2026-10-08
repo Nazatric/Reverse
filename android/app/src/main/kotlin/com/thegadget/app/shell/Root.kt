@@ -16,6 +16,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
@@ -55,13 +57,14 @@ import com.thegadget.app.screens.PluginsScreen
 import com.thegadget.app.screens.SearchScreen
 import com.thegadget.app.screens.SongsScreen
 import com.thegadget.app.state.AppState
+import com.thegadget.app.ui.Fx
 import com.thegadget.app.ui.theme.GadgetTokens
 import com.thegadget.app.ui.theme.LocalTokens
 
 /** `clip-path: circle(R at X Y)`, with R animated by the caller. */
 private fun circleAt(cx: Float, cy: Float, r: Float): Shape = object : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline =
-        Outline.Generic(Path().apply { addCircle(cx, cy, r) })
+        Outline.Generic(Path().apply { addOval(Rect(Offset(cx, cy), r)) })
 }
 
 /**
@@ -116,13 +119,23 @@ private fun Chrome(app: AppState, tokens: GadgetTokens, settings: GadgetSettings
     val nav by app.nav.collectAsState()
     val activity = LocalContext.current as? android.app.Activity
     BackHandler {
-        if (!nav.isEmpty) app.back() else activity?.finish()
+        if (!nav.isEmpty) {
+            Fx.close()
+            app.back()
+        } else {
+            activity?.finish()
+        }
     }
     BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black)) {
         val density = LocalDensity.current
         val wPx = with(density) { maxWidth.toPx() }
         val hPx = with(density) { maxHeight.toPx() }
         LaunchedEffect(wPx, hPx) { app.setViewport(wPx, hPx) }
+        val ctx = LocalContext.current
+        LaunchedEffect(settings.sounds, settings.haptics) {
+            Fx.init(ctx)
+            Fx.configure(settings.sounds, settings.haptics)
+        }
         Backdrop(tokens)
 
         val motion = settings.motionOn
@@ -138,6 +151,7 @@ private fun Chrome(app: AppState, tokens: GadgetTokens, settings: GadgetSettings
             if (!motion || nav.isEmpty) {
                 enter.snapTo(1f)
             } else {
+                if (nav.dir == NavDirection.FORWARD) Fx.open()
                 enter.snapTo(0f)
                 val dur = if (irisOpen) 660 else if (nav.dir == NavDirection.BACK) 420 else 560
                 enter.animateTo(1f, tween(dur, easing = EaseCurve))

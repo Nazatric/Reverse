@@ -84,6 +84,10 @@ fun GlassButton(
 ) {
     val colors = tokens.colors
     val shape = RoundedCornerShape(999.dp)
+    val press: () -> Unit = {
+        com.thegadget.app.ui.Fx.tap()
+        onClick()
+    }
     val bg = when (variant) {
         "primary" -> Brush.verticalGradient(listOf(Color(0xFFF4F4F1), Color(0xFFC9CAC6)))
         else -> Brush.verticalGradient(listOf(colors.glassTop, colors.glassBottom))
@@ -94,7 +98,7 @@ fun GlassButton(
             .clip(shape)
             .background(bg)
             .border(1.dp, colors.glassEdge, shape)
-            .clickable(onClick = onClick)
+            .clickable(onClick = press)
             .padding(horizontal = 18.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
