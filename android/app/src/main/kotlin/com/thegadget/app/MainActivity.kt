@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
             }
             Box(
                 Modifier.fillMaxSize().pointerInput(Unit) {
-                    awaitFirstDown(requireUnconsumed = false)
+                    awaitPointerEventScope { awaitFirstDown(requireUnconsumed = false) }
                     if (!immersive) immersive = true
                 },
             ) { Root(app) }
