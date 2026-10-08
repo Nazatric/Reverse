@@ -292,7 +292,7 @@ private fun DrawScope.drawText(
 // again each frame (the wireframe alone has hundreds of commands) pegs the main thread on device,
 // which is what produced the startup ANR. Geometry is immutable once built, so cache it.
 private val pathCache = java.util.concurrent.ConcurrentHashMap<SvgElement, Path>()
-private val transformCache = java.util.concurrent.ConcurrentHashMap<String, SvgTransform>()
+private val transformCache = java.util.concurrent.ConcurrentHashMap<String, com.thegadget.app.core.Matrix2>()
 
 /**
  * Parse every element/clip path once, off the main thread, so the first hub frame (and every
