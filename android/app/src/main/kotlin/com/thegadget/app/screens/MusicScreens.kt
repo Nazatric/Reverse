@@ -37,6 +37,7 @@ import com.thegadget.app.core.GadgetText
 import com.thegadget.app.core.Library
 import com.thegadget.app.core.Route
 import com.thegadget.app.core.Track
+import com.thegadget.app.service.QueueItem
 import com.thegadget.app.data.LibraryStatus
 import com.thegadget.app.shell.Empty
 import com.thegadget.app.shell.GlassButton
@@ -126,7 +127,7 @@ fun MusicHomeScreen(app: AppState, tokens: GadgetTokens) {
             snap.current?.let { t ->
                 Spacer(Modifier.height(8.dp))
                 Text("now playing", color = tokens.colors.dim, style = TextStyle(fontFamily = GadgetFonts.display, fontSize = 11.sp, letterSpacing = 2.sp))
-                TrackRow(t, tokens, playing = snap.playing) { app.push(Route.Now) }
+                TrackRow(t.toTrack(), tokens, playing = snap.playing) { app.push(Route.Now) }
                 PlayerControls(app, tokens)
             }
         }
@@ -251,3 +252,5 @@ fun NowPlayingScreen(app: AppState, tokens: GadgetTokens) {
         }
     }
 }
+
+private fun QueueItem.toTrack(): Track = Track(id = id, title = title, folder = folder, cover = cover, uri = uri)

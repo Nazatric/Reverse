@@ -108,7 +108,7 @@ fun Hub(
     BoxWithConstraints(modifier.fillMaxSize()) {
         Canvas(Modifier.fillMaxSize()) {
             drawChains(geometry, tokens, swayPhase)
-            drawMascotHub(geometry.hubCenter, geometry.hubSize, tokens)
+            mascotFace(geometry.hubCenter, geometry.hubSize / 2f, yellow = true)
             for ((spec, box) in geometry.nodes) drawNode(spec, box, tokens, measurer, labelStyle)
             for ((i, spec) in pluginNodes.withIndex()) {
                 val size = orbSize(spec.d, geometry.metrics.u, tokens.orbScale, floor = 54f)

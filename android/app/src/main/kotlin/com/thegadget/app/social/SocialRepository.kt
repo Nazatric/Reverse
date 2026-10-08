@@ -45,8 +45,8 @@ data class ChatMsg(
 object Social {
     private const val ROOT = "gadget/v1"
     private val BROKERS = listOf(
-        "broker.hivemq.com" to 8884,
-        "broker.emqx.io" to 8084,
+        "broker.hivemq.com" to 8883,
+        "broker.emqx.io" to 8883,
     )
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -81,12 +81,10 @@ object Social {
             .retain(true)
             .build()
         val built = MqttClient.builder()
-            .webSocket()
+            .useMqttVersion5()
             .serverHost(host)
             .serverPort(port)
-            .webSocketPath("/mqtt")
             .sslWithDefaultConfig()
-            .useMqttVersion5()
             .identifier(clientId())
             .automaticReconnectWithDefaultConfig()
             .willPublish(will)

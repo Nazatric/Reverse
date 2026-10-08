@@ -20,7 +20,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.thegadget.app.core.GadgetType
+import com.thegadget.app.ui.theme.GadgetType
 import com.thegadget.app.state.AppState
 import com.thegadget.app.ui.theme.GadgetFonts
 import com.thegadget.app.ui.theme.GadgetTokens
