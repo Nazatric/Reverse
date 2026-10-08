@@ -15,7 +15,7 @@ agp = "9.1.0"
 # each stable line is one minor behind the tip, which is how these were chosen. Google Maven is
 # not reachable from the authoring sandbox, so run `./gradlew dependencyUpdates` (or the Android
 # Studio upgrade assistant) once to confirm before shipping a release build.
-composeBom = "2026.09.00"
+composeBom = "2026.05.00"
 coreKtx = "1.19.0"
 activityCompose = "1.13.0"
 lifecycle = "2.11.0"
@@ -29,7 +29,7 @@ media3 = "1.11.1"
 
 # --- Third party (licence + maintenance reviewed; see THIRD_PARTY.md) ------------------------
 # Coil 3.6.3 — Apache-2.0, actively released (verified on GitHub, 2026-09-18).
-coil = "3.6.3"
+coil = "3.5.0"
 # HiveMQ MQTT Client 1.4.0 — Apache-2.0, MQTT 5.0, the only maintained Android-capable MQTT 5
 # client (verified on GitHub, 2026-08-21). Ships a dedicated `android` classifier-free artifact
 # that excludes the JVM-only Netty epoll transport.

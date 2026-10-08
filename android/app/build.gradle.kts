@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.thegadget.app"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.thegadget.app"
