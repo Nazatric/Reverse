@@ -104,7 +104,7 @@ fun MusicHomeScreen(app: AppState, tokens: GadgetTokens) {
     val lib by app.library.state.collectAsState()
     val snap by app.player.state.collectAsState()
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-        if (uri != null) app.library.adopt(uri, null)
+        if (uri != null) app.adoptFolder(uri)
     }
     Page(app, tokens, "music", subtitle = when (lib.status) {
         LibraryStatus.EMPTY -> "no folder chosen"

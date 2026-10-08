@@ -212,6 +212,8 @@ class AppState(app: Application) : AndroidViewModel(app) {
         stores.setPluginsRaw(kept)
     }.let { }
 
+    fun adoptFolder(uri: android.net.Uri) = viewModelScope.launch { library.adopt(uri) }.let { }
+
     fun finishOnboarding() = viewModelScope.launch { stores.setOnboarded(true) }.let { }
 
     fun resetSettings() = viewModelScope.launch {
