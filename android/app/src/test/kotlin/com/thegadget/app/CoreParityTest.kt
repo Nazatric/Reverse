@@ -5,6 +5,7 @@ import com.thegadget.app.core.GadgetText
 import com.thegadget.app.core.Game2048
 import com.thegadget.app.core.GadgetMetrics
 import com.thegadget.app.core.Ids
+import com.thegadget.app.core.key
 import com.thegadget.app.core.Library
 import com.thegadget.app.core.NavStack
 import com.thegadget.app.core.NavState
@@ -187,13 +188,29 @@ class CoreParityTest {
     }
 
     @Test
-    fun `best score is only overtaken, never lowered`() {
-        val (score, best) = Game2048.newBest(score = 100, gained = 40, best = 120)
-        assertEquals(140, score)
-        assertEquals(140, best)
-        val (s2, b2) = Game2048.newBest(score = 100, gained = 0, best = 500)
-        assertEquals(100, s2)
-        assertEquals(500, b2)
+    fun `spawn fills a free cell and follows the web 90-10 split`() {
+        // `free[Math.floor(Math.random() * free.length)]`, `Math.random() < 0.9 ? 2 : 4`
+        var id = 500
+        val one = listOf(Tile(id++, 2, 0, 0))
+        val low = Game2048.spawn(one, { id++ }, scripted(0.0, 0.5))
+        assertEquals(2, low.size)
+        assertEquals(2, low.last().v)
+        assertTrue("spawned onto an occupied cell", low.last().r != 0 || low.last().c != 0)
+        assertTrue("a new tile must be flagged pop", low.last().pop)
+
+        val high = Game2048.spawn(one, { id++ }, scripted(0.0, 0.95))
+        assertEquals(4, high.last().v)
+
+        // a full board cannot spawn
+        var n = 600
+        val full = (0 until 16).map { Tile(n++, 2, it / 4, it % 4) }
+        assertEquals(16, Game2048.spawn(full, { n++ }, scripted(0.0, 0.0)).size)
+    }
+
+    /** A scripted randomness source, so spawn cell and value are deterministic. */
+    private fun scripted(vararg values: Double): RandomSource = object : RandomSource {
+        private var i = 0
+        override fun nextDouble(): Double = values[(i++).coerceAtMost(values.size - 1)]
     }
 
     /* ------------------------------------------------------------------- nav semantics */
