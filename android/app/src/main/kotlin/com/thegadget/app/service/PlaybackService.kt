@@ -15,6 +15,7 @@ import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
 import com.google.common.util.concurrent.ListenableFuture
+import kotlinx.coroutines.flow.first
 import com.thegadget.app.MainActivity
 import com.thegadget.app.data.Stores
 import java.io.File
@@ -207,7 +208,7 @@ class PlaybackService : MediaSessionService() {
         }
     }
 
-    private fun onTrackChanged() = attachMetadata(queue.getOrNull(qIdx) ?: return)
+    private fun onTrackChanged() { attachMetadata(queue.getOrNull(qIdx) ?: return) }
 
     /** MediaSession metadata with real cover art — the lock-screen card. */
     private fun attachMetadata(item: QueueItem) {
@@ -319,7 +320,7 @@ class PlaybackService : MediaSessionService() {
                 CMD_VOLUME -> player?.volume = args.getFloat("value", 0.8f).coerceIn(0f, 1f).also { scope.launch { stores.setVolume(it) } }
                 CMD_WAKE -> player?.setWakeMode(if (args.getBoolean("value", true)) C.WAKE_MODE_LOCAL else C.WAKE_MODE_NONE)
             }
-            return androidx.media3.common.util.Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+            return com.google.common.util.concurrent.Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
         }
     }
 }

@@ -58,7 +58,7 @@ jobs:
           STRIP="s#file:///home/runner/work/Reverse/Reverse/android/app/src/##"
           CNT="$(grep -E '^e: ' /tmp/build.log | sed -E "$STRIP; s#:[0-9]+:[0-9]+.*##" | sort | uniq -c | tr '\n' '|')"
           if [ -n "$CNT" ]; then echo "::error::FILECOUNTS ${CNT}"; fi
-          KERR="$(grep -E '^e: ' /tmp/build.log | grep -v '/screens/' | sed -E "$STRIP" | head -120 | tr '\n' '|')"
+          KERR="$(grep -E '^e: ' /tmp/build.log | grep -v '/screens/' | sed -E "$STRIP; s/^[^ ]+ [0-9]+:[0-9]+ //" | sort | uniq -c | sort -rn | head -60 | tr '\n' '|')"
           if [ -n "$KERR" ]; then echo "::error::KOTLIN ${KERR}"; fi
 
       - name: Upload APKs

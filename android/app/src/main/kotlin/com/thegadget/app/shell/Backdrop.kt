@@ -10,57 +10,46 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
 import com.thegadget.app.core.Clock
-import com.thegadget.app.core.SVG_PALETTES
-import com.thegadget.app.core.SVG_SOURCES
-import com.thegadget.app.core.SvgPath
-import com.thegadget.app.core.SvgTransform
-import com.thegadget.app.core.SvgFit
+import com.thegadget.app.ui.SvgPalette
+import com.thegadget.app.ui.SvgPaths
 import com.thegadget.app.ui.renderSvgGroup
-import com.thegadget.app.ui.theme.CssWire
+import com.thegadget.app.ui.theme.Css
 import com.thegadget.app.ui.theme.GadgetTokens
-import com.thegadget.app.state.AppState
 import kotlin.math.abs
 import kotlin.math.sin
 
 /**
- * The backdrop: `body::before` radial wash, `body::after` vignette, the drifting wireframe SVG, and
- * the `Particles` canvas. The wireframe uses the exact extracted path geometry, tinted and
- * alpha-blended exactly as `hub.css` `.wire` does.
+ * The backdrop: `body::before` radial wash, the drifting wireframe SVG (exact extracted geometry,
+ * tinted and alpha-blended as `hub.css` `.wire` does), a vignette, and the `Particles` canvas.
  */
 @Composable
 fun Backdrop(tokens: GadgetTokens, modifier: Modifier = Modifier) {
-    val group = SVG_SOURCES.require("wire.Wireframe")
-    val drift = rememberInfiniteTransition(label = "wire")
-    val dx by drift.animateFloat(
-        initialValue = -6f, targetValue = 8f, label = "drift",
-        animationSpec = infiniteRepeatable(tween(30_000, easing = LinearEasing), RepeatMode.Reverse),
-    )
+    val group = SvgPaths.require("wire.Wireframe")
+    val palette = SvgPalette(currentColor = Css.GLYPH, cssVar = Css::cssVar)
     Box(modifier.fillMaxSize()) {
         Canvas(Modifier.fillMaxSize()) {
             drawRect(Brush.radialGradient(listOf(Color(0xFF1B1D1B), Color(0xFF06070A)), radius = size.maxDimension))
-            val fit = SvgFit.fit(group.viewBox, 0f, 0f, size.width, size.height)
-            renderSvgGroup(group, CssWire.palette, "stroke", fit.dst, CssWire.css + mapOf("opacity" to 0.75f))
-            // vignette
+            renderSvgGroup(
+                group = group,
+                palette = palette,
+                variant = "stroke",
+                dst = Rect(0f, 0f, size.width, size.height),
+                css = Css::wireElement,
+            )
             drawRect(Brush.radialGradient(listOf(Color.Transparent, Color(0x66000000)), radius = size.maxDimension * 0.75f))
         }
         Particles(tokens)
     }
 }
 
-/** `Particles` — 14–34 dots, density-scaled, drifting and twinkling. Frozen under the parity clock. */
+/** `Particles` — density-scaled drifting dots that twinkle. Frozen under the parity clock. */
 @Composable
 fun Particles(tokens: GadgetTokens, modifier: Modifier = Modifier) {
     val density = tokens.glow
