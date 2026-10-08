@@ -76,12 +76,10 @@ object Game2048 {
             fun row(i: Int): IntArray =
                 if (dir == Direction.UP || dir == Direction.DOWN) intArrayOf(i, k) else intArrayOf(k, i)
 
-            val order = (0 until SIZE).let { list ->
-                when (dir) {
-                    Direction.LEFT, Direction.UP -> list.toList()
-                    Direction.RIGHT, Direction.DOWN -> list.reversed()
-                }
-            }
+            // Cells of this line in traversal order: left/up count from the near edge,
+            // right/down from the far edge.
+            val forward = dir == Direction.LEFT || dir == Direction.UP
+            val order = IntArray(SIZE) { if (forward) it else SIZE - 1 - it }
             val line = order.map { i ->
                 val (r, c) = row(i)
                 grid[r][c]
