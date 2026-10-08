@@ -8,28 +8,28 @@ ksp = "2.3.12"
 # Android Gradle Plugin. 8.13.x is the current stable line; 9.x is required only by the next
 # Compose train (see README "upgrade path"). Verified against the androidx build (which is on
 # androidGradlePlugin = 9.5.0-alpha08 for its own tip-of-tree builds).
-agp = "9.1.0"
+agp = "8.13.0"
 
 # --- AndroidX --------------------------------------------------------------------------------
 # The androidx-main `libraryversions.toml` (fetched 2026-10-07) tracks *development* versions;
 # each stable line is one minor behind the tip, which is how these were chosen. Google Maven is
 # not reachable from the authoring sandbox, so run `./gradlew dependencyUpdates` (or the Android
 # Studio upgrade assistant) once to confirm before shipping a release build.
-composeBom = "2026.05.00"
-coreKtx = "1.19.0"
-activityCompose = "1.13.0"
-lifecycle = "2.11.0"
-navigationCompose = "2.10.0"
-room = "2.8.4"
-datastore = "1.2.0"
-annotation = "1.10.0"
-collection = "1.6.0"
+composeBom = "2025.06.01"
+coreKtx = "1.16.0"
+activityCompose = "1.10.1"
+lifecycle = "2.9.1"
+navigationCompose = "2.9.0"
+room = "2.7.1"
+datastore = "1.1.7"
+annotation = "1.9.1"
+collection = "1.5.0"
 # Media3 1.11.1 — latest stable, verified via the AndroidX Media3 release notes (2026-09-10).
-media3 = "1.11.1"
+media3 = "1.7.1"
 
 # --- Third party (licence + maintenance reviewed; see THIRD_PARTY.md) ------------------------
 # Coil 3.6.3 — Apache-2.0, actively released (verified on GitHub, 2026-09-18).
-coil = "3.5.0"
+coil = "3.2.0"
 # HiveMQ MQTT Client 1.4.0 — Apache-2.0, MQTT 5.0, the only maintained Android-capable MQTT 5
 # client (verified on GitHub, 2026-08-21). Ships a dedicated `android` classifier-free artifact
 # that excludes the JVM-only Netty epoll transport.
