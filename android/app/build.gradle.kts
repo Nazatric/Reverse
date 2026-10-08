@@ -102,5 +102,13 @@ dependencies {
     implementation(libs.hivemq.mqtt)
 
     testImplementation(libs.junit)
+
+    // Instrumentation: the parity screenshot harness drives the real activity through Compose's
+    // test rule, so it needs the Compose test artifacts and the androidx.test runner.
+    androidTestImplementation(compose)
     androidTestImplementation(libs.androidx.test.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.rules)
+    androidTestImplementation(libs.compose.ui.test.junit4)
+    debugImplementation(libs.compose.ui.test.manifest)
 }
