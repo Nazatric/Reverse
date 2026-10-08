@@ -43,8 +43,8 @@ and passed unit tests. It does **not** mean pixel parity has been measured — s
 | --- | --- | --- | --- |
 | `state/nav.tsx` stack + History mirror | `core/NavStack.kt` + `BackHandler` | ✅ | Back steps exactly one level; back at the hub exits; `home()` clears |
 | `routeKey()` | `Route.key()` | ✅ | Parameterised routes keyed by id |
-| Iris transition opening from the tapped node (`iris-open`/`iris-close`) | origin recorded (`Origin(x,y,r)`) | 🟡 | The origin is captured and stored, but the radial reveal animation itself is **not implemented** — page changes are instant |
-| `surface-in` / `view-fwd` / `view-back` transitions | ❌ | ❌ | Not implemented |
+| Iris transition opening from the tapped node (`iris-open`/`iris-close`) | `shell/Root.kt` circle clip | ✅ | 660 ms open from the tapped node's centre/radius, 500 ms close back into it; radii from `Iris.start`/`Iris.end` in the reference stage units, `--ease` easing |
+| `surface-in` / `view-fwd` / `view-back` transitions | `shell/Root.kt` | 🟡 | `surface-in` (560 ms, scale 0.92→1, fade) and `view-back` (420 ms, scale 1.04→1, fade) are implemented; the forward `view-fwd` variant is not distinguished from `surface-in` |
 | Escape / browser back | system back + predictive back (`enableOnBackInvokedCallback`) | ✅ | |
 
 ## 3. Music
@@ -114,8 +114,8 @@ and passed unit tests. It does **not** mean pixel parity has been measured — s
 | FS Access handles (`gadget-handles`) | DataStore `gadget-handles` holding the persisted SAF tree URI | ✅ |
 | Google Fonts (Orbitron, Exo 2) | vendored TTFs in `res/font` from the same upstream sources | ✅ |
 | HTML `<audio>` | Media3 ExoPlayer | ✅ |
-| WebAudio UI sounds (`utils/audio.ts`) | ❌ | ❌ |
-| `navigator.vibrate` haptics | ❌ | ❌ |
+| WebAudio UI sounds (`utils/audio.ts`) | `core/Sfxr.kt` + `ui/Fx.kt` | ✅ |
+| `navigator.vibrate` haptics | `ui/Fx.kt` | ✅ |
 
 ---
 
@@ -128,9 +128,13 @@ than glossed over, and none of them is claimed as parity anywhere in this reposi
    but no reference/native/diff/overlay PNG set has been produced, so no screen is verified
    pixel-for-pixel. Screen layouts use the token system and CSS-derived values, but per-component
    spacing and typography have not been diffed.
-2. **Page transitions are missing.** The iris reveal and the surface/view animations are absent;
-   navigation is instant. The origin needed for the iris is captured.
-3. **No UI sounds and no haptics**, despite both settings existing.
+2. **The UI sounds are synthesised, not sampled.** `core/Sfxr.kt` ports the SFXR generator and the
+   six jsfxr presets the web uses, at the web's volumes and haptic patterns. The web draws its
+   randomness from `Math.random()`, so it renders a different variant of each preset on every page
+   load; the native build uses a fixed seed so the six sounds are identical every launch. The
+   timbres therefore match the generator, not any one particular web rendering.
+3. **The forward `view-fwd` transition is not distinguished** from `surface-in`; the web applies a
+   slightly different curve to pushes that do not come from the hub.
 4. **No parallax and no ambient streak layer.**
 5. **Custom controls are approximated.** `GlassSlider`, `Sheet`, `VirtualList` and the `Orb` icon
    set are replaced by Material 3 widgets or simplified drawing in several places, which is a
