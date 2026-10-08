@@ -229,8 +229,9 @@ private fun DrawScope.drawNode(
         withTransform({
             // transform: scaleX(1.1) skewX(-12deg)
             val m = Matrix()
+            // scaleX(1.1) skewX(-12deg): a=1.1 at (0,0), c=1.1*tan at (0,1) of the 4x4 matrix.
             m.values[0] = 1.1f
-            m.values[4] = tan(-12.0 * PI / 180.0).toFloat()
+            m.values[1] = 1.1f * tan(-12.0 * PI / 180.0).toFloat()
             transform(m)
         }) {
             drawText(

@@ -103,13 +103,12 @@ private fun DrawScope.drawElement(
     scope.drawIntoCanvas { canvas ->
         canvas.save()
         if (transform != null) {
-            val m = Matrix(
-                floatArrayOf(
-                    transform.a, transform.c, transform.e,
-                    transform.b, transform.d, transform.f,
-                    0f, 0f, 1f,
-                ),
-            )
+            // Compose `Matrix` is 4x4 (16 floats); feeding it a 9-float 3x3 crashed the first
+            // Backdrop frame with ArrayIndexOutOfBoundsException on the main thread.
+            val m = Matrix().apply {
+                this[0, 0] = transform.a; this[0, 1] = transform.c; this[0, 3] = transform.e
+                this[1, 0] = transform.b; this[1, 1] = transform.d; this[1, 3] = transform.f
+            }
             canvas.concat(m)
         }
 
