@@ -8,7 +8,7 @@ ksp = "2.3.12"
 # Android Gradle Plugin. 8.13.x is the current stable line; 9.x is required only by the next
 # Compose train (see README "upgrade path"). Verified against the androidx build (which is on
 # androidGradlePlugin = 9.5.0-alpha08 for its own tip-of-tree builds).
-agp = "8.13.0"
+agp = "9.1.0"
 
 # --- AndroidX --------------------------------------------------------------------------------
 # The androidx-main `libraryversions.toml` (fetched 2026-10-07) tracks *development* versions;
