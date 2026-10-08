@@ -47,20 +47,16 @@ jobs:
       - name: Unit tests
         run: gradle --no-daemon :app:testDebugUnitTest 2>&1 | tee -a /tmp/build.log; exit "${PIPESTATUS[0]}"
 
-      - name: Surface compiler errors as annotations
+      - name: Surface build errors as annotations
         if: failure()
         run: |
           touch /tmp/build.log
-          grep -E '^e: ' /tmp/build.log | head -60 | while IFS= read -r line; do
-            loc="$(echo "$line" | sed -E 's/^e: (file:\/\/)?([^:]+\.kt):?[[:space:]]*\(?([0-9]+),?[[:space:]]*([0-9]+)\)?.*/\2 \3 \4/')"
-            file="$(echo "$loc" | awk '{print $1}')"
-            ln="$(echo "$loc" | awk '{print $2}')"
-            col="$(echo "$loc" | awk '{print $3}')"
-            msg="$(echo "$line" | sed -E 's/^e: (file:\/\/)?[^:]+\.kt:?[[:space:]]*\(?.*?\)?:? //' )"
-            rel="$(echo "$file" | sed -E 's|^.*/(app/src/.*)$|\1|')"
-            echo "::error file=android/$rel,line=${ln:-1},col=${col:-1}::$msg"
-          done
-          grep -E '^e: |FAILURE|Caused by' /tmp/build.log | head -80 || true
+          # Any line that looks like a real failure becomes a readable annotation.
+          grep -nE "^e: |error:|FAILURE:|What went wrong|Could not |Unresolved reference|Caused by:|A problem occurred|Execution failed|> Task .*FAILED|cannot find symbol|Unsupported|incompatible|No matching variant|requires|Plugin with id" /tmp/build.log \
+            | head -70 \
+            | while IFS= read -r line; do echo "::error::${line}"; done
+          # The Gradle "What went wrong" block, verbatim, as one annotation.
+          awk '/What went wrong/{f=1} f{print} /^\* Try/{f=0}' /tmp/build.log | head -40 | paste -sd' | ' - | sed 's/^/::error::WHATWENTWRONG: /' || true
 
       - name: Upload APKs
         if: always()
