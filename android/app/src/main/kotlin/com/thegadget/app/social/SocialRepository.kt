@@ -81,13 +81,13 @@ object Social {
             .retain(true)
             .build()
         val built = MqttClient.builder()
-            .useMqttVersion5()
-            .identifier(clientId())
             .webSocket()
             .serverHost(host)
             .serverPort(port)
             .webSocketPath("/mqtt")
             .sslWithDefaultConfig()
+            .useMqttVersion5()
+            .identifier(clientId())
             .automaticReconnectWithDefaultConfig()
             .willPublish(will)
             .addConnectedListener {
@@ -98,13 +98,12 @@ object Social {
             .addDisconnectedListener { _connected.value = false }
             .buildAsync()
         client = built
-        built.connect()
-            .whenComplete { _, err ->
-                if (err != null) {
-                    brokerIdx++
-                    Log.w("social", "broker connect failed", err)
-                }
+        built.connect().whenComplete { _: Any?, err: Throwable? ->
+            if (err != null) {
+                brokerIdx++
+                Log.w("social", "broker connect failed", err)
             }
+        }
     }
 
     private fun resubscribe() {
@@ -118,7 +117,7 @@ object Social {
     }
 
     private fun onMessage(p: Mqtt5Publish) {
-        val topic = p.topic.asString()
+        val topic = p.topic.toString()
         val body = p.payloadAsBytes?.toString(Charsets.UTF_8) ?: return
         when {
             topic.startsWith("$ROOT/p/") -> {

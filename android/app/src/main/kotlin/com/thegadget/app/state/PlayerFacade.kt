@@ -38,8 +38,8 @@ class PlayerFacade(context: Context) {
             object : com.google.common.util.concurrent.FutureCallback<MediaController> {
                 override fun onSuccess(c: MediaController) {
                     controller = c
-                    c.addListener(object : androidx.media3.common.Player.Listener {
-                        override fun onExtrasChanged(player: androidx.media3.common.Player, extras: Bundle) {
+                    c.addListener(object : MediaController.Listener {
+                        override fun onExtrasChanged(controller: MediaController, extras: Bundle) {
                             extras.getString(PlaybackService.EXTRA_STATE)?.let { s ->
                                 runCatching { json.decodeFromString(PlaybackSnapshot.serializer(), s) }
                                     .getOrNull()?.let { snap -> _snapshot.value = snap }

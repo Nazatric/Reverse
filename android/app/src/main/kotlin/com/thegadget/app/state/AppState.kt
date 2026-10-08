@@ -35,6 +35,7 @@ class AppState(app: Application) : AndroidViewModel(app) {
     val onboarded = stores.onboarded.stateIn(viewModelScope, SharingStarted.Eagerly, false)
     val volume = stores.volume.stateIn(viewModelScope, SharingStarted.Eagerly, 0.8f)
     val best2048 = stores.best2048.stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+    val hostCode = stores.hostCode.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val _nav = kotlinx.coroutines.flow.MutableStateFlow(NavState())
     val nav: StateFlow<NavState> get() = _nav
@@ -156,7 +157,30 @@ class AppState(app: Application) : AndroidViewModel(app) {
 
     /* ----------------------------------------------------------------- settings */
     fun updateSetting(name: String, value: Any?) = viewModelScope.launch {
-        stores.updateSettings(name, value)
+        val s0 = settings.value
+        val num = (value as? Number)?.toFloat()
+        val bool = value as? Boolean
+        val updated = when (name) {
+            "orbScale" -> s0.copy(orbScale = num ?: s0.orbScale)
+            "hubScale" -> s0.copy(hubScale = num ?: s0.hubScale)
+            "chainScale" -> s0.copy(chainScale = num ?: s0.chainScale)
+            "labelScale" -> s0.copy(labelScale = num ?: s0.labelScale)
+            "glow" -> s0.copy(glow = num ?: s0.glow)
+            "hour24" -> s0.copy(hour24 = bool ?: s0.hour24)
+            "autoImmersive" -> s0.copy(autoImmersive = bool ?: s0.autoImmersive)
+            "sounds" -> s0.copy(sounds = bool ?: s0.sounds)
+            "haptics" -> s0.copy(haptics = bool ?: s0.haptics)
+            "ambient" -> s0.copy(ambient = bool ?: s0.ambient)
+            "parallax" -> s0.copy(parallax = bool ?: s0.parallax)
+            "chainSway" -> s0.copy(chainSway = bool ?: s0.chainSway)
+            "reduceMotion" -> s0.copy(reduceMotion = bool ?: s0.reduceMotion)
+            "y2k" -> s0.copy(y2k = bool ?: s0.y2k)
+            "notify" -> s0.copy(notify = bool ?: s0.notify)
+            "keepAwake" -> s0.copy(keepAwake = bool ?: s0.keepAwake)
+            "artwork" -> s0.copy(artwork = bool ?: s0.artwork)
+            else -> s0
+        }
+        stores.setSettings(updated)
     }.let { }
 
     /* ------------------------------------------------------------------ plugins */

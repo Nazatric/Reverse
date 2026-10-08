@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
@@ -313,8 +314,8 @@ fun DrawScope.mascotFace(center: Offset, radius: Float, yellow: Boolean, bare: B
                     )
                     drawPath(
                         Path().apply {
-                            moveTo(-30f, 0f); quadTo(0f, 0f, 0f, -30f); quadTo(0f, 0f, 30f, 0f)
-                            quadTo(0f, 0f, 0f, 30f); quadTo(0f, 0f, -30f, 0f); close()
+                            moveTo(-30f, 0f); quadraticBezierTo(0f, 0f, 0f, -30f); quadraticBezierTo(0f, 0f, 30f, 0f)
+                            quadraticBezierTo(0f, 0f, 0f, 30f); quadraticBezierTo(0f, 0f, -30f, 0f); close()
                         },
                         Color.White.copy(alpha = 0.95f * flare),
                     )
@@ -323,7 +324,7 @@ fun DrawScope.mascotFace(center: Offset, radius: Float, yellow: Boolean, bare: B
                 // mouth: dark cavity, chrome grille, teeth bars clipped to the lip curve
                 drawPath(
                     Path().apply {
-                        moveTo(-72f, 16f); quadTo(0f, 40f, 72f, 16f)
+                        moveTo(-72f, 16f); quadraticBezierTo(0f, 40f, 72f, 16f)
                         lineTo(68f, 36f)
                         cubicTo(58f, 76f, -58f, 76f, -68f, 36f)
                         close()
@@ -331,7 +332,7 @@ fun DrawScope.mascotFace(center: Offset, radius: Float, yellow: Boolean, bare: B
                     Color(0xFF0A0A07),
                 )
                 val lip = Path().apply {
-                    moveTo(-62f, 24f); quadTo(0f, 46f, 62f, 24f)
+                    moveTo(-62f, 24f); quadraticBezierTo(0f, 46f, 62f, 24f)
                     lineTo(59f, 38f)
                     cubicTo(50f, 72f, -50f, 72f, -41f, 38f)
                     close()
@@ -354,12 +355,12 @@ fun DrawScope.mascotFace(center: Offset, radius: Float, yellow: Boolean, bare: B
                     drawOval(Color.Black.copy(alpha = 0.28f), topLeft = Offset(-64f, 64f), size = Size(128f, 24f))
                 }
                 drawPath(
-                    Path().apply { moveTo(-60f, 26f); quadTo(0f, 48f, 60f, 26f) },
+                    Path().apply { moveTo(-60f, 26f); quadraticBezierTo(0f, 48f, 60f, 26f) },
                     Color.White.copy(alpha = 0.6f),
                     style = Stroke(1.5f),
                 )
                 drawPath(
-                    Path().apply { moveTo(-72f, 16f); quadTo(0f, 40f, 72f, 16f) },
+                    Path().apply { moveTo(-72f, 16f); quadraticBezierTo(0f, 40f, 72f, 16f) },
                     Color(0xFF0A0A07),
                     style = Stroke(5f),
                 )

@@ -135,10 +135,6 @@ object GadgetFonts {
     )
 }
 
-/** Font family aliases used across the shell (Orbitron = display, Exo 2 = body). */
-val Orbitron = GadgetFonts.display
-val Exo2 = GadgetFonts.body
-
 /** Re-export of the core orb-size rule so shell code can import it from the theme. */
 fun orbSize(d: Float, u: Float, scale: Float, floor: Float): Float =
     com.thegadget.app.core.orbSize(d, u, scale, floor)

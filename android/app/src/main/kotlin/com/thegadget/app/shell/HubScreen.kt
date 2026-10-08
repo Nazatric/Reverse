@@ -59,7 +59,7 @@ fun HubScreen(app: AppState, tokens: GadgetTokens, modifier: Modifier = Modifier
                     com.thegadget.app.core.HubNodeId.HOMIES -> Route.Homies
                     com.thegadget.app.core.HubNodeId.ACCOUNT -> Route.Account
                 }
-                app.push(route, origin = com.thegadget.app.core.Origin(center.x, center.y), fromHub = true)
+                app.push(route, origin = com.thegadget.app.core.Origin(center.x, center.y, size / 2f), fromHub = true)
             },
         )
     }

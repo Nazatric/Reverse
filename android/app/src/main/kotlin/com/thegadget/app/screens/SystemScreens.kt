@@ -139,7 +139,7 @@ fun OnboardingScreen(app: AppState) {
         Column(Modifier.fillMaxWidth().align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(steps[step].first, color = tokens.colors.text, style = TextStyle(fontFamily = GadgetFonts.display, fontWeight = FontWeight.Black, fontSize = 28.sp))
             Text(steps[step].second, color = tokens.colors.dim, style = TextStyle(fontFamily = GadgetFonts.body, fontSize = 14.sp))
-            GlassButton(if (step < steps.size - 1) "next" else "start") {
+            GlassButton(if (step < steps.size - 1) "next" else "start", tokens) {
                 if (step < steps.size - 1) step++ else app.finishOnboarding()
             }
         }
