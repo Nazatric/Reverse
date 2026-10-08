@@ -180,13 +180,13 @@ class LibraryRepository(
         com.thegadget.app.core.TrackMeta(meta.title, meta.artist, meta.album, coverPath)
     }
 
-    private fun readTags(track: Track): Pair<com.thegadget.app.core.Meta, String?> {
+    private suspend fun readTags(track: Track): Pair<com.thegadget.app.core.Meta, String?> {
         val uri = Uri.parse(track.uri)
         val length = context.contentResolver.query(uri, null, null, null, null)?.use { c ->
             val ix = c.getColumnIndex(DocumentsContract.Document.COLUMN_SIZE)
             if (c.moveToFirst() && ix >= 0) c.getLong(ix).toInt() else -1
         } ?: -1
-        if (length <= 0) return TagReader.Meta() to null
+        if (length <= 0) return com.thegadget.app.core.Meta() to null
         val source = object : com.thegadget.app.core.ByteSource {
             override val size: Long get() = length.toLong()
             override fun read(offset: Long, len: Int): ByteArray =

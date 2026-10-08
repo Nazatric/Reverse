@@ -55,7 +55,7 @@ jobs:
           # block into a single annotation (pipes as line breaks) to stay under the cap.
           BLOCK="$(tail -140 /tmp/build.log | tr '\n' '|' | tr -d '\r')"
           echo "::error::BUILDFAIL ${BLOCK}"
-          KERR="$(grep -E '^e: ' /tmp/build.log | head -40 | tr '\n' '|')"
+          KERR="$(grep -E '^e: ' /tmp/build.log | head -300 | tr '\n' '|')"
           if [ -n "$KERR" ]; then echo "::error::KOTLIN ${KERR}"; fi
 
       - name: Upload APKs

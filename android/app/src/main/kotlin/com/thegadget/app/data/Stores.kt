@@ -12,6 +12,8 @@ import com.thegadget.app.core.GadgetSettings
 import com.thegadget.app.core.StorageKeys
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json as KJson
 
 private val Context.dataStore by preferencesDataStore(name = "gadget")
@@ -65,7 +67,7 @@ class Stores(private val context: Context) {
     val trackStats: Flow<TrackStats> = context.dataStore.data.map {
         it[stringPreferencesKey(StorageKeys.TRACK_STATS)]?.let { s -> runCatching { kjson.decodeFromString<TrackStats>(s) }.getOrDefault(emptyMap()) } ?: emptyMap()
     }
-    suspend fun setTrackStats(v: TrackStats) = context.dataStore.edit { it[stringPreferencesKey(StorageKeys.TRACK_STATS)] = kjson.encodeToString(kotlinx.serialization.builtins.MapSerializer(kotlinx.serialization.builtins.String.serializer(), TrackStat.serializer()), v) }
+    suspend fun setTrackStats(v: TrackStats) = context.dataStore.edit { it[stringPreferencesKey(StorageKeys.TRACK_STATS)] = kjson.encodeToString(MapSerializer(String.serializer(), TrackStat.serializer()), v) }
 
     val lastTrack: Flow<String?> = context.dataStore.data.map { it[stringPreferencesKey(StorageKeys.LAST_TRACK)] }
     suspend fun setLastTrack(id: String?) = context.dataStore.edit { if (id == null) it.remove(stringPreferencesKey(StorageKeys.LAST_TRACK)) else it[stringPreferencesKey(StorageKeys.LAST_TRACK)] = id }
