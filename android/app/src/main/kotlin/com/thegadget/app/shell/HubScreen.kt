@@ -23,26 +23,28 @@ import com.thegadget.app.state.AppState
  */
 @Composable
 fun HubScreen(app: AppState, tokens: GadgetTokens, modifier: Modifier = Modifier) {
-    val settings by app.settings.collectAsState()
+    val plugins by app.plugins.collectAsState()
     BoxWithConstraints(modifier.fillMaxSize()) {
         val density = LocalDensity.current
         val wPx = with(density) { maxWidth.toPx() }
         val hPx = with(density) { maxHeight.toPx() }
         val metrics = remember(wPx, hPx) { GadgetMetrics.compute(wPx, hPx) }
         val geometry = remember(metrics, tokens) { hubGeometry(metrics, tokens) }
-        val pluginNodes = remember(settings.plugins) {
-            settings.plugins.filter { it.kind == "hub" }.mapIndexed { i, p ->
-                HubNodeSpec(
-                    id = com.thegadget.app.core.HubNodeId.MUSIC,
-                    label = p.title,
-                    x = 30f + i * 10f,
-                    y = 50f + i * 6f,
-                    d = 90f,
-                    ly = 16f,
-                    icon = p.icon.ifEmpty { "puzzle" },
-                    page = p.id,
-                    pluginId = p.id,
-                )
+        val pluginNodes = remember(plugins) {
+            plugins.filter { it.enabled }.flatMap { rec ->
+                rec.doc.nodes.map { n ->
+                    HubNodeSpec(
+                        id = com.thegadget.app.core.HubNodeId.MUSIC,
+                        label = n.label,
+                        x = n.x.toFloat(),
+                        y = n.y.toFloat(),
+                        d = n.d.toFloat(),
+                        ly = n.ly.toFloat(),
+                        icon = n.icon ?: "star",
+                        page = n.page,
+                        pluginId = rec.id,
+                    )
+                }
             }
         }
         Hub(

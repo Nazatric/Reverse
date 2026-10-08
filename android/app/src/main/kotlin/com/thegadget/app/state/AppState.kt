@@ -39,6 +39,18 @@ class AppState(app: Application) : AndroidViewModel(app) {
     private val _nav = kotlinx.coroutines.flow.MutableStateFlow(NavState())
     val nav: StateFlow<NavState> get() = _nav
 
+    /** Installed plugins, parsed from the stored source with the enabled override applied. */
+    val plugins: StateFlow<List<com.thegadget.app.core.PluginRecord>> =
+        kotlinx.coroutines.flow.combine(stores.pluginsRaw, stores.pluginEnabled) { raw, enabled ->
+            raw.mapNotNull { src -> runCatching { com.thegadget.app.core.PluginSchema.parsePlugin(src) }.getOrNull() }
+                .map { it.copy(enabled = enabled[it.id] ?: it.enabled) }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    /** The viewport in px, measured by the shell; drives the metric system. */
+    private val _size = kotlinx.coroutines.flow.MutableStateFlow(390f to 844f)
+    fun setViewport(w: Float, h: Float) { _size.value = w to h }
+    fun metrics(): GadgetMetrics = GadgetMetrics.compute(_size.value.first, _size.value.second)
+
     init {
         player.connect()
         viewModelScope.launch { library.restore() }
@@ -149,25 +161,31 @@ class AppState(app: Application) : AndroidViewModel(app) {
 
     /* ------------------------------------------------------------------ plugins */
     fun togglePlugin(id: String) = viewModelScope.launch {
-        val s = settings.value
-        stores.setSettings(s.copy(plugins = s.plugins.map { if (it.id == id) it.copy(enabled = !it.enabled) else it }))
+        val current = plugins.value.firstOrNull { it.id == id }?.enabled ?: true
+        stores.setPluginEnabled(id, !current)
     }.let { }
 
-    /** `validatePlugins` accepts only plugins that pass `validatePlugin`; the rest surface an error. */
+    /** `installPlugin` — validate through [PluginSchema.parsePlugin]; a [PluginError] surfaces its message. */
     fun importPlugin(json: String): String? {
-        val result = com.thegadget.app.core.parsePlugin(json)
-        if (result.errors.isNotEmpty()) return result.errors.first().message
-        val p = result.plugins.firstOrNull() ?: return "No plugin in that file."
+        val record = try {
+            com.thegadget.app.core.PluginSchema.parsePlugin(json)
+        } catch (e: com.thegadget.app.core.PluginError) {
+            return e.message
+        }
         viewModelScope.launch {
-            val s = settings.value
-            stores.setSettings(s.copy(plugins = (s.plugins.filterNot { it.id == p.id }) + p))
+            val others = stores.pluginsRawOnce().filterNot { src ->
+                runCatching { com.thegadget.app.core.PluginSchema.parsePlugin(src).id }.getOrNull() == record.id
+            }
+            stores.setPluginsRaw(others + json)
         }
         return null
     }
 
     fun deletePlugin(id: String) = viewModelScope.launch {
-        val s = settings.value
-        stores.setSettings(s.copy(plugins = s.plugins.filterNot { it.id == id }))
+        val kept = stores.pluginsRawOnce().filterNot { src ->
+            runCatching { com.thegadget.app.core.PluginSchema.parsePlugin(src).id }.getOrNull() == id
+        }
+        stores.setPluginsRaw(kept)
     }.let { }
 
     fun finishOnboarding() = viewModelScope.launch { stores.setOnboarded(true) }.let { }

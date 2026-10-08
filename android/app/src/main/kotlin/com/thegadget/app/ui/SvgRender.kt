@@ -15,6 +15,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.nativeCanvas
 import com.thegadget.app.core.PathData
 import com.thegadget.app.core.PathSegment
@@ -99,8 +101,7 @@ private fun DrawScope.drawElement(
     scope.drawIntoCanvas { canvas ->
         canvas.save()
         if (transform != null) {
-            val m = Matrix()
-            m.setValues(
+            val m = Matrix(
                 floatArrayOf(
                     transform.a, transform.c, transform.e,
                     transform.b, transform.d, transform.f,
@@ -211,16 +212,16 @@ private fun hex(s: String): Color {
 
 private fun SvgGradient.toShader(bounds: Rect): androidx.compose.ui.graphics.Shader? {
     val colors = stops.map { hex(it.color) }
-    val stopsArr = stops.map { it.offset }.toFloatArray()
+    val stopsList = stops.map { it.offset }
     if (colors.size < 2) return null
     val w = bounds.width
     val h = bounds.height
     return if (kind == "linear") {
         LinearGradientShader(
             colors = colors,
-            colorStops = stopsArr,
-            start = Offset(bounds.left + (x1 ?: 0f) * w, bounds.top + (y1 ?: 0f) * h),
-            end = Offset(bounds.left + (x2 ?: 1f) * w, bounds.top + (y2 ?: 0f) * h),
+            colorStops = stopsList,
+            from = Offset(bounds.left + (x1 ?: 0f) * w, bounds.top + (y1 ?: 0f) * h),
+            to = Offset(bounds.left + (x2 ?: 1f) * w, bounds.top + (y2 ?: 0f) * h),
             tileMode = TileMode.Clamp,
         )
     } else {
@@ -228,7 +229,7 @@ private fun SvgGradient.toShader(bounds: Rect): androidx.compose.ui.graphics.Sha
         val radius = (r ?: 0.5f) * kotlin.math.sqrt((w * w + h * h) / 2f)
         RadialGradientShader(
             colors = colors,
-            colorStops = stopsArr,
+            colorStops = stopsList,
             center = Offset(bounds.left + (cx ?: 0.5f) * w, bounds.top + (cy ?: 0.5f) * h),
             radius = radius,
             tileMode = TileMode.Clamp,

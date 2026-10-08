@@ -34,7 +34,7 @@ import com.thegadget.app.ui.theme.orbBrush
 
 /**
  * The shared chrome pieces — `Orb`, `GlassButton`, `Field`, `Empty`, page scaffolding — ported
- * from `src/components/ui/*`. They compose from the token system so the settings sliders (orb /
+ * from `src/components/ui`. They compose from the token system so the settings sliders (orb /
  * glow scale) ripple through exactly as they do on the web.
  */
 

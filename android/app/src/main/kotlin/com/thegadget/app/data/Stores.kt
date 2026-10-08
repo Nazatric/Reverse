@@ -12,6 +12,7 @@ import com.thegadget.app.core.GadgetSettings
 import com.thegadget.app.core.StorageKeys
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json as KJson
@@ -55,6 +56,32 @@ class Stores(private val context: Context) {
     suspend fun setPlaylists(v: List<Playlist>) = putList(StorageKeys.PLAYLISTS, kotlinx.serialization.builtins.ListSerializer(Playlist.serializer()), v)
     suspend fun setGames(v: List<Game>) = putList(StorageKeys.GAMES, kotlinx.serialization.builtins.ListSerializer(Game.serializer()), v)
     suspend fun setHomies(v: List<Homie>) = putList(StorageKeys.HOMIES, kotlinx.serialization.builtins.ListSerializer(Homie.serializer()), v)
+
+    suspend fun addPlaylist(p: Playlist) = setPlaylists(playlistsFirst() + p)
+    suspend fun removePlaylist(id: String) = setPlaylists(playlistsFirst().filterNot { it.id == id })
+    private suspend fun playlistsFirst(): List<Playlist> =
+        context.dataStore.data.map { it[stringPreferencesKey(StorageKeys.PLAYLISTS)]?.let { s -> runCatching { kjson.decodeFromString(kotlinx.serialization.builtins.ListSerializer(Playlist.serializer()), s) }.getOrDefault(emptyList()) } ?: emptyList() }.firstOrNull() ?: emptyList()
+
+    /* ---------------------------------------------------------- plugins (raw source kept verbatim) */
+
+    val pluginsRaw: Flow<List<String>> = context.dataStore.data.map {
+        it[stringPreferencesKey(PLUGINS_KEY)]?.let { s -> runCatching { kjson.decodeFromString(kotlinx.serialization.builtins.ListSerializer(String.serializer()), s) }.getOrDefault(emptyList()) } ?: emptyList()
+    }
+    suspend fun pluginsRawOnce(): List<String> = pluginsRaw.firstOrNull() ?: emptyList()
+    suspend fun setPluginsRaw(v: List<String>) = context.dataStore.edit { it[stringPreferencesKey(PLUGINS_KEY)] = kjson.encodeToString(kotlinx.serialization.builtins.ListSerializer(String.serializer()), v) }
+
+    val pluginEnabled: Flow<Map<String, Boolean>> = context.dataStore.data.map {
+        it[stringPreferencesKey(PLUGIN_ENABLED_KEY)]?.let { s -> runCatching { kjson.decodeFromString(MapSerializer(String.serializer(), Boolean.serializer()), s) }.getOrDefault(emptyMap()) } ?: emptyMap()
+    }
+    suspend fun setPluginEnabled(id: String, enabled: Boolean) = context.dataStore.edit {
+        val cur = it[stringPreferencesKey(PLUGIN_ENABLED_KEY)]?.let { s -> runCatching { kjson.decodeFromString(MapSerializer(String.serializer(), Boolean.serializer()), s) }.getOrDefault(emptyMap()) } ?: emptyMap()
+        it[stringPreferencesKey(PLUGIN_ENABLED_KEY)] = kjson.encodeToString(MapSerializer(String.serializer(), Boolean.serializer()), cur + (id to enabled))
+    }
+
+    private companion object {
+        const val PLUGINS_KEY = "gadget:plugins"
+        const val PLUGIN_ENABLED_KEY = "gadget:plugin-enabled"
+    }
 
     /* ---------------------------------------------------------- scalars */
 

@@ -60,7 +60,6 @@ fun ConfigScreen(app: AppState, tokens: GadgetTokens) {
         Slider2048Row("label scale", settings.labelScale, 0.5f, 2f, tokens) { app.updateSetting("labelScale", it) }
         Slider2048Row("glow", settings.glow, 0f, 2f, tokens) { app.updateSetting("glow", it) }
         ToggleRow("24-hour clock", settings.hour24, tokens) { app.updateSetting("hour24", it) }
-        ToggleRow("autoplay next", settings.autoplay, tokens) { app.updateSetting("autoplay", it) }
         ToggleRow("auto-immersive", settings.autoImmersive, tokens) { app.updateSetting("autoImmersive", it) }
         Spacer(Modifier.height(16.dp))
         GlassButton("plugins", tokens, variant = "ghost") { app.push(com.thegadget.app.core.Route.Plugins) }
@@ -87,7 +86,7 @@ private fun ToggleRow(label: String, checked: Boolean, tokens: GadgetTokens, onC
 
 @Composable
 fun PluginsScreen(app: AppState, tokens: GadgetTokens) {
-    val settings by app.settings.collectAsState()
+    val plugins by app.plugins.collectAsState()
     var msg by remember { mutableStateOf("") }
     val ctx = LocalContext.current
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -96,14 +95,14 @@ fun PluginsScreen(app: AppState, tokens: GadgetTokens) {
             msg = app.importPlugin(text) ?: "installed"
         }
     }
-    Page(app, tokens, "plugins", subtitle = "${settings.plugins.size} installed") {
+    Page(app, tokens, "plugins", subtitle = "${plugins.size} installed") {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             GlassButton("install from file", tokens) { picker.launch(arrayOf("application/json")) }
             if (msg.isNotEmpty()) Text(msg, color = tokens.colors.accent, style = TextStyle(fontFamily = GadgetFonts.body, fontSize = 12.sp))
-            settings.plugins.forEach { p ->
+            plugins.forEach { p ->
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text(p.title, color = tokens.colors.text, style = TextStyle(fontFamily = GadgetFonts.body, fontWeight = FontWeight.W700, fontSize = 15.sp))
+                        Text(p.name, color = tokens.colors.text, style = TextStyle(fontFamily = GadgetFonts.body, fontWeight = FontWeight.W700, fontSize = 15.sp))
                         Text(p.id, color = tokens.colors.faint, style = TextStyle(fontFamily = GadgetFonts.body, fontSize = 11.sp))
                     }
                     Switch(checked = p.enabled, onCheckedChange = { app.togglePlugin(p.id) })
@@ -116,9 +115,9 @@ fun PluginsScreen(app: AppState, tokens: GadgetTokens) {
 
 @Composable
 fun PluginPageScreen(app: AppState, id: String, tokens: GadgetTokens) {
-    val settings by app.settings.collectAsState()
-    val p = settings.plugins.firstOrNull { it.id == id }
-    Page(app, tokens, p?.title ?: "plugin", subtitle = p?.description) {
+    val plugins by app.plugins.collectAsState()
+    val p = plugins.firstOrNull { it.id == id }
+    Page(app, tokens, p?.name ?: "plugin", subtitle = p?.description) {
         Text(
             "This page is rendered from the plugin manifest (id ${p?.id}). The block renderer ships in the plugins milestone.",
             color = tokens.colors.dim,

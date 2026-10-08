@@ -27,7 +27,7 @@ import com.thegadget.app.ui.theme.GadgetTokens
 
 /**
  * A page surface: the shared status pill, a large Orbitron title, an optional subtitle, and
- * scrolling body — the layout every `pages/*` uses. Title/subtitle sizes come from the metric
+ * scrolling body — the layout every `pages` uses. Title/subtitle sizes come from the metric
  * system (`page-title`, `page-sub`), not hardcoded, so they track the viewport like the CSS does.
  */
 @Composable

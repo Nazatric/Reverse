@@ -16,7 +16,7 @@ import com.thegadget.app.core.GadgetMetrics
  * Every number here is a *measured* value, not a guess.
  *
  * Sources:
- *   - `src/styles/*.css` — colours, radii, durations, the three easing curves.
+ *   - `src/styles CSS files` — colours, radii, durations, the three easing curves.
  *   - `parity/out/web/<viewport>/geometry.json` — the box of every element at each parity
  *     viewport, produced by the harness from the running production build.
  *   - `/android.icu/` — n/a.

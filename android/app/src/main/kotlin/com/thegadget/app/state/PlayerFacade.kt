@@ -32,18 +32,24 @@ class PlayerFacade(context: Context) {
     fun connect() {
         if (controller != null) return
         val token = SessionToken(appContext, ComponentName(appContext, PlaybackService::class.java))
-        MediaController.Builder(appContext, token).buildAsync().addListener(
-            {
-                controller = it as MediaController
-                (it as MediaController).addListener(object : MediaController.Listener {
-                    override fun onExtrasChanged(c: MediaController, extras: Bundle) {
-                        extras.getString(PlaybackService.EXTRA_STATE)?.let { s ->
-                            runCatching { json.decodeFromString(PlaybackSnapshot.serializer(), s) }
-                                .getOrNull()?.let { snap -> _snapshot.value = snap }
+        val future = MediaController.Builder(appContext, token).buildAsync()
+        com.google.common.util.concurrent.Futures.addCallback(
+            future,
+            object : com.google.common.util.concurrent.FutureCallback<MediaController> {
+                override fun onSuccess(c: MediaController) {
+                    controller = c
+                    c.addListener(object : androidx.media3.common.Player.Listener {
+                        override fun onExtrasChanged(player: androidx.media3.common.Player, extras: Bundle) {
+                            extras.getString(PlaybackService.EXTRA_STATE)?.let { s ->
+                                runCatching { json.decodeFromString(PlaybackSnapshot.serializer(), s) }
+                                    .getOrNull()?.let { snap -> _snapshot.value = snap }
+                            }
                         }
-                    }
-                })
-                _snapshot.value = readExtras(it as MediaController)
+                    })
+                    _snapshot.value = readExtras(c)
+                }
+
+                override fun onFailure(t: Throwable) {}
             },
             MoreExecutors.directExecutor(),
         )
