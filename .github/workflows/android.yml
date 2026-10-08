@@ -29,9 +29,15 @@ jobs:
           java-version: 17
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: "platform-tools platforms;android-36 platforms;android-37 build-tools;36.0.0"
+        run: |
+          set -o pipefail
+          SDKM="$(command -v sdkmanager || true)"
+          if [ -z "$SDKM" ] && [ -n "$ANDROID_SDK_ROOT" ]; then SDKM="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"; fi
+          if [ -z "$SDKM" ] && [ -n "$ANDROID_HOME" ]; then SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"; fi
+          echo "using sdkmanager: $SDKM (ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT ANDROID_HOME=$ANDROID_HOME)" | tee -a /tmp/build.log
+          yes | "$SDKM" --licenses >> /tmp/build.log 2>&1 || true
+          "$SDKM" "platform-tools" "platforms;android-36" "platforms;android-37" "build-tools;36.0.0" 2>&1 | tee -a /tmp/build.log
+          exit "${PIPESTATUS[0]}"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
