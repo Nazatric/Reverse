@@ -38,12 +38,14 @@ const SAMPLES = 32;
 
 const groups = extractAll();
 const paths = [];
+const transforms = [];
 for (const [group, , els] of groups) {
   els.forEach((el, i) => {
     if (el.kind === "path" && el.d) paths.push({ group, index: i, d: el.d });
+    if (el.transform) transforms.push({ group, index: i, transform: el.transform });
   });
 }
-console.log(`sampling ${paths.length} paths from ${groups.length} groups`);
+console.log(`sampling ${paths.length} paths and ${transforms.length} transforms from ${groups.length} groups`);
 
 process.env.LD_LIBRARY_PATH = "/tmp/lib";
 const browser = await puppeteer.launch({
@@ -79,20 +81,47 @@ try {
     SAMPLES,
   );
 
+  // The same ground truth for transforms: the browser's consolidated matrix for each list.
+  const matrices = await page.evaluate((items) => {
+    const svg = document.getElementById("s");
+    const out = [];
+    for (const item of items) {
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.setAttribute("transform", item.transform);
+      svg.appendChild(g);
+      const m = g.transform.baseVal.consolidate()?.matrix;
+      out.push({
+        group: item.group,
+        index: item.index,
+        transform: item.transform,
+        matrix: m ? [m.a, m.b, m.c, m.d, m.e, m.f].map((v) => Number(v.toFixed(6))) : null,
+      });
+      svg.removeChild(g);
+    }
+    return out;
+  }, transforms);
+
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(
     OUT,
     JSON.stringify(
       {
-        note: "Sampled from Chromium SVGGeometryElement.getPointAtLength — the ground truth for the Kotlin SvgPath parser.",
+        note: "Sampled in Chromium — getPointAtLength / consolidated transform matrices: ground truth for SvgPath and SvgTransform.",
         samples: SAMPLES,
         paths: vectors,
+        transforms: matrices,
       },
       null,
       1,
     ),
   );
   const bad = vectors.filter((v) => !Number.isFinite(v.length) || v.points.some(([x, y]) => !Number.isFinite(x) || !Number.isFinite(y)));
+  const badT = matrices.filter((m) => !m.matrix);
+  if (badT.length) {
+    console.error(`WARNING: ${badT.length} transforms did not consolidate:`);
+    for (const b of badT.slice(0, 10)) console.error(`  ${b.group}#${b.index} ${b.transform}`);
+    process.exitCode = 1;
+  }
   console.log(`wrote ${path.relative(ROOT, OUT)} — ${vectors.length} paths`);
   if (bad.length) {
     console.error(`WARNING: ${bad.length} paths did not sample cleanly:`);

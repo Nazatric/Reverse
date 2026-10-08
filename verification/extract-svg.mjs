@@ -349,7 +349,7 @@ const KEPT = [
 
 /** Attributes that exist for the DOM/a11y and have no meaning to a Canvas renderer. */
 const IGNORED = new Set([
-  "ariaHidden", "focusable", "key", "decoding", "draggable", "alt", "xmlns", "preserveAspectRatio",
+  "ariaHidden", "focusable", "key", "decoding", "draggable", "alt", "xmlns",
   "version", "role", "tabIndex", "loading", "crossOrigin",
 ]);
 
@@ -618,6 +618,7 @@ function componentGroups(file, prefix, { arrow = false } = {}) {
       `${prefix}.${name}`,
       {
         viewBox: rootAttrs.viewBox ?? null,
+        preserveAspectRatio: rootAttrs.preserveAspectRatio ?? null,
         rootClassName: rootAttrs.className ?? null,
         fill: rootAttrs.fill ?? null,
         stroke: rootAttrs.stroke ?? null,
@@ -686,6 +687,7 @@ function emitGradient(g) {
 function emitGroup([name, meta, elements]) {
   const settings = [`name = ${kstr(name)}`];
   if (meta.viewBox) settings.push(`viewBox = ${kstr(meta.viewBox)}`);
+  if (meta.preserveAspectRatio) settings.push(`preserveAspectRatio = ${kstr(meta.preserveAspectRatio)}`);
   if (meta.rootClassName) settings.push(`rootClassName = ${kstr(meta.rootClassName)}`);
   if (meta.width) settings.push(`width = ${num(meta.width)}`);
   if (meta.height) settings.push(`height = ${num(meta.height)}`);
@@ -811,6 +813,8 @@ data class SvgGroup(
     val name: String,
     val viewBox: String,
     val elements: List<SvgElement>,
+    /** \`none\` for the wireframe (stretches to its box); SVG default otherwise. */
+    val preserveAspectRatio: String? = null,
     val rootClassName: String? = null,
     val width: Float? = null,
     val height: Float? = null,

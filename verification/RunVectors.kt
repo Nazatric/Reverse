@@ -28,6 +28,8 @@ import com.thegadget.app.core.Origin
 import com.thegadget.app.core.Route
 import com.thegadget.app.core.key
 import com.thegadget.app.core.StorageKeys
+import com.thegadget.app.core.SvgTransform
+import com.thegadget.app.core.SvgFit
 import com.thegadget.app.core.PathData
 import com.thegadget.app.core.PluginError
 import com.thegadget.app.core.PluginSchema
@@ -387,6 +389,56 @@ fun main(args: Array<String>) {
             println("PASS paths          ${paths.size} paths, worst sample delta ${"%.4f".format(worstPoint)}u ($worstPointAt), worst length delta ${"%.4f".format(worstLength)}u ($worstLengthAt)")
         } else {
             println("FAIL paths          ${paths.size} paths, worst sample delta ${"%.4f".format(worstPoint)}u, worst length delta ${"%.4f".format(worstLength)}u")
+        }
+    }
+
+    /* ------------------------------------------------------------ viewBox fit
+     * Where each group's viewBox lands in its destination box: the wireframe stretches
+     * (preserveAspectRatio="none"), everything else is xMidYMid meet. */
+    run {
+        val meet = SvgFit.fit(24f, 24f, 96f, 96f)
+        expectClose("fit meet uniform", meet.scaleX.toDouble(), 4.0, 1e-9)
+        expectClose("fit meet uniform y", meet.scaleY.toDouble(), 4.0, 1e-9)
+        val letter = SvgFit.fit(24f, 24f, 100f, 50f)
+        // Float arithmetic on the Kotlin side; 1e-6 is comfortably inside a float ULP at these magnitudes.
+        expectClose("fit meet letterbox scale", letter.scaleX.toDouble(), 50.0 / 24.0, 1e-6)
+        expectClose("fit meet letterbox tx", letter.tx.toDouble(), (100.0 - 24.0 * 50.0 / 24.0) / 2.0, 1e-9)
+        expectClose("fit meet letterbox ty", letter.ty.toDouble(), 0.0, 1e-9)
+        val none = SvgFit.fit(800f, 800f, 736f, 400f, "none")
+        expectClose("fit none x", none.scaleX.toDouble(), 736.0 / 800.0, 1e-6)
+        expectClose("fit none y", none.scaleY.toDouble(), 400.0 / 800.0, 1e-9)
+        expect("fit wire group is the only none", SvgPaths.groups.filter { it.preserveAspectRatio == "none" }.map { it.name }, listOf("wire.Wireframe"))
+        println("PASS fit             meet/none viewBox mapping matches the SVG rules")
+    }
+
+    /* ------------------------------------------------------------ svg transforms
+     * The renderer concats one composed matrix per element; SvgTransform must agree with the
+     * browser's transform.baseVal.consolidate() for every list the catalogue carries. */
+    run {
+        val doc = obj(load(here, "paths"))
+        val rows = arr(doc.field("transforms"))
+        var worst = 0.0
+        var worstAt = ""
+        var bad = 0
+        for (row in rows) {
+            val r = obj(row)
+            val label = "${str(r.field("group"))}#${long(r.field("index"))}"
+            val src = str(r.field("transform")) ?: ""
+            val m = arr(r.field("matrix")).mapNotNull { num(it) }
+            if (m.size != 6) { bad++; println("  FAIL transform $label: no reference matrix"); continue }
+            val got = SvgTransform.parse(src)
+            val delta = listOf(
+                got.a.toDouble() - m[0], got.b.toDouble() - m[1], got.c.toDouble() - m[2],
+                got.d.toDouble() - m[3], got.e.toDouble() - m[4], got.f.toDouble() - m[5],
+            ).maxOf { kotlin.math.abs(it) }
+            if (delta > worst) { worst = delta; worstAt = label }
+            expectClose("transform $label", delta, 0.0, 1e-4)
+        }
+        failures += bad
+        if (bad == 0 && worst <= 1e-4) {
+            println("PASS transforms      ${rows.size} composed transforms, worst matrix delta ${"%.2e".format(worst)} ($worstAt)")
+        } else {
+            println("FAIL transforms      worst matrix delta ${"%.2e".format(worst)}")
         }
     }
 

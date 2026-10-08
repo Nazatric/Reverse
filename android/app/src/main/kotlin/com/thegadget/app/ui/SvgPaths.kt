@@ -9,7 +9,7 @@ package com.thegadget.app.ui
 //
 // sources: src/components/{ui/Icons.tsx, hub/Glyphs.tsx, hub/Wireframe.tsx, hub/TopBar.tsx,
 //          hub/Chains.tsx, ui/Art.tsx, MascotFace.tsx}
-// digest: 7011a0aaf4c5a292
+// digest: 9693031e14e4ab3f
 // 47 groups, 132 elements, 9 gradients, 2 clip paths
 
 /** One gradient stop. `offset` is 0..1 along the gradient vector/radius. */
@@ -90,6 +90,8 @@ data class SvgGroup(
     val name: String,
     val viewBox: String,
     val elements: List<SvgElement>,
+    /** `none` for the wireframe (stretches to its box); SVG default otherwise. */
+    val preserveAspectRatio: String? = null,
     val rootClassName: String? = null,
     val width: Float? = null,
     val height: Float? = null,
@@ -114,7 +116,7 @@ data class SvgGroup(
 }
 
 object SvgPaths {
-    const val DIGEST = "7011a0aaf4c5a292"
+    const val DIGEST = "9693031e14e4ab3f"
 
     /** Every extracted group: `icon.play`, `glyph.ConfigGlyph`, `chain.tile`, `mascot.MascotFace`, … */
     val groups: List<SvgGroup> = listOf(
@@ -722,6 +724,7 @@ object SvgPaths {
     SvgGroup(
         name = "wire.Wireframe",
         viewBox = "0 0 800 800",
+        preserveAspectRatio = "none",
         rootClassName = "wire",
         elements = listOf(
             SvgElement(kind = "path", d = "M160 620C242 516 335 390 415 316S618 214 764 208"),
