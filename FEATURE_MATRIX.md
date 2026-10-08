@@ -146,3 +146,6 @@ than glossed over, and none of them is claimed as parity anywhere in this reposi
 8. **MQTT has not been run against a live broker** in this environment.
 9. **Account statistics are computed but not displayed.**
 10. **`CollectionHero`, `Art` fallback disc, and the music pages' bespoke layouts** are simplified.
+11. **Startup ANR on device (fixed, needs retest).** The first real-device run ANR'd entering the hub
+    because the render thread parsed SVG path strings every frame. Fixed by caching + pre-warming;
+    confirmed only by compilation, not yet by a fresh device run.

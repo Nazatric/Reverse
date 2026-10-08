@@ -143,7 +143,14 @@ Until that diff is produced and reviewed, no parity percentage should be quoted,
   the Compose test rule and androidx.test runner on the classpath), but has not been executed on an
   emulator, so there are no runtime results for navigation, playback, SAF scanning, MQTT or plugin
   rendering.
-- Manual runtime testing: not performed in this environment (no emulator or device available).
+- Manual runtime testing: one real-device session was provided via screenshots. It showed a system
+  **ANR ("the gadget isn't responding") on entering the hub** after onboarding. The cause traced to
+  the render thread re-running `PathData.parse` on every extracted SVG element on every frame
+  (`renderSvgGroup` runs in the draw phase), so the first hub draw paid the full parse cost on the
+  main thread. Fixed by memoising path and transform parsing and pre-warming the cache, plus the
+  two typeface families, on a background thread at startup (`GadgetApp`, `ui/SvgRender.kt`). Build
+  and 31/31 unit tests are green after the fix, but the fix **needs a device retest to confirm** the
+  ANR is gone — CI cannot run an emulator reliably.
 
 ## 7. Remaining differences from the web app
 
