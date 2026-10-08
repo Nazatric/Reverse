@@ -112,6 +112,9 @@ class Stores(private val context: Context) {
     suspend fun setNotifyAsked(v: Boolean) = context.dataStore.edit { it[booleanPreferencesKey(StorageKeys.NOTIFY_ASKED)] = v }
 
     val crash: Flow<String?> = context.dataStore.data.map { it[stringPreferencesKey(StorageKeys.CRASH)] }
+    /** The crash card's "reset data" — drops every `gadget:*` value, like clearing localStorage. */
+    suspend fun clearAll() { context.dataStore.edit { it.clear() } }
+
     suspend fun setCrash(v: String?) = context.dataStore.edit { if (v == null) it.remove(stringPreferencesKey(StorageKeys.CRASH)) else it[stringPreferencesKey(StorageKeys.CRASH)] = v }
 
     /* ---------------------------------------------------------- helpers */

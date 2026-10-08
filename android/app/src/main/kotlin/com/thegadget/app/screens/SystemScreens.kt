@@ -113,16 +113,38 @@ fun PluginsScreen(app: AppState, tokens: GadgetTokens) {
     }
 }
 
+/**
+ * A plugin page. [id] names either a page declared by a plugin or the plugin itself (in which case
+ * its first page is shown). Every pixel here comes from the validated manifest.
+ */
 @Composable
 fun PluginPageScreen(app: AppState, id: String, tokens: GadgetTokens) {
     val plugins by app.plugins.collectAsState()
-    val p = plugins.firstOrNull { it.id == id }
-    Page(app, tokens, p?.name ?: "plugin", subtitle = p?.description) {
-        Text(
-            "This page is rendered from the plugin manifest (id ${p?.id}). The block renderer ships in the plugins milestone.",
-            color = tokens.colors.dim,
-            style = TextStyle(fontFamily = GadgetFonts.body, fontSize = 13.sp),
+    val resolved = remember(plugins, id) {
+        plugins.firstNotNullOfOrNull { rec ->
+            rec.doc.pages.firstOrNull { it.id == id || it.label == id }?.let { rec to it }
+        } ?: plugins.firstOrNull { it.id == id }?.let { rec -> rec to rec.doc.pages.firstOrNull() }
+    }
+    val page = resolved?.second
+    val plugin = resolved?.first
+    // A plugin theme is applied while its page is open, as `applyPluginTheme` does on the web.
+    val themed = remember(plugin, tokens) {
+        val t = plugin?.doc?.theme
+        if (t == null) tokens else tokens.copy(
+            orbScale = (t.orbScale ?: tokens.orbScale.toDouble()).toFloat(),
+            hubScale = (t.hubScale ?: tokens.hubScale.toDouble()).toFloat(),
+            chainScale = (t.chainScale ?: tokens.chainScale.toDouble()).toFloat(),
+            labelScale = (t.labelScale ?: tokens.labelScale.toDouble()).toFloat(),
+            glow = (t.glow ?: tokens.glow.toDouble()).toFloat(),
+            colors = if (t.accent != null) tokens.colors.copy(accent = androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(t.accent))) else tokens.colors,
         )
+    }
+    if (page == null) {
+        Page(app, themed, "plugin", subtitle = "This plugin declares no pages.") {}
+        return
+    }
+    Page(app, themed, page.title, subtitle = page.subtitle.ifEmpty { plugin?.description }) {
+        PluginBlocks(app, themed, page.blocks)
     }
 }
 

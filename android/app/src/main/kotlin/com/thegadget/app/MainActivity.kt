@@ -3,6 +3,18 @@ package com.thegadget.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.activity.enableEdgeToEdge
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
@@ -28,9 +40,47 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val app = viewModel<AppState>()
-            Root(app)
+            AppStateHolder.current = app
+            val settings by app.settings.collectAsState()
+
+            // `navigator.wakeLock.request('screen')` — the screen stays on while that is enabled.
+            LaunchedEffect(settings.keepAwake) {
+                if (settings.keepAwake) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                else window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+            // `requestFullscreen({navigationUI:'hide'})` on the first tap, when auto-immersive is on.
+            var immersive by remember { mutableStateOf(false) }
+            val controller = WindowCompat.getInsetsController(window, window.decorView)
+            LaunchedEffect(immersive, settings.autoImmersive) {
+                if (immersive && settings.autoImmersive) {
+                    controller.systemBarsBehavior =
+                        androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    controller.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+                } else {
+                    controller.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+                }
+            }
+            Box(
+                Modifier.fillMaxSize().pointerInput(Unit) {
+                    awaitFirstDown(requireUnconsumed = false)
+                    if (!immersive) immersive = true
+                },
+            ) { Root(app) }
         }
+        maybeAskForNotifications()
     }
+
+    /** The web asks once, after the first tap; the flag lives in `gadget:notify-asked`. */
+    private fun maybeAskForNotifications() {
+        if (android.os.Build.VERSION.SDK_INT < 33) return
+        if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) return
+        notifyLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    private val notifyLauncher =
+        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { }
 
     /* ------------------------------------------------------------ parity harness */
 

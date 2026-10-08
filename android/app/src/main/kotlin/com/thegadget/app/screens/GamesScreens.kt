@@ -79,7 +79,7 @@ fun GameDetailScreen(app: AppState, id: String, tokens: GadgetTokens) {
             Text(it.url, color = tokens.colors.dim, style = TextStyle(fontFamily = GadgetFonts.body, fontSize = 12.sp))
             Spacer(Modifier.height(12.dp))
             // Launching counts a play, exactly like `GameDetail.launch`.
-            GlassButton("launch", tokens) { app.markGamePlayed(it.id) }
+            GlassButton("launch", tokens) { app.markGamePlayed(it.id); app.push(com.thegadget.app.core.Route.GameBrowser(it.url, it.name)) }
             Spacer(Modifier.height(8.dp))
             GlassButton("edit", tokens, variant = "ghost") { app.push(Route.GameEdit(it.id)) }
             GlassButton("delete", tokens, variant = "ghost") { app.deleteGame(it.id) }
@@ -181,14 +181,24 @@ private fun BoardTile(t: Tile, tokens: GadgetTokens) {
 
 /* The web-games container: an isolated WebView, which the task explicitly allows for
  * user-added external game content only. Everything around it is native. */
+/**
+ * The one place a WebView is allowed: user-added external web games. It is fully isolated — its own
+ * data directory suffix, no cookies or storage shared with anything else, JavaScript confined to
+ * this view — and every pixel of chrome around it is native.
+ */
 @Composable
-fun GameBrowserScreen(app: AppState, url: String, tokens: GadgetTokens, onExit: () -> Unit) {
+fun GameBrowserScreen(url: String, title: String, tokens: GadgetTokens) {
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         AndroidView(
             factory = { ctx ->
                 android.webkit.WebView(ctx).apply {
+                    // Isolation: a private data store, no shared cookies, no file access.
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
+                    settings.allowFileAccess = false
+                    settings.allowContentAccess = false
+                    settings.mediaPlaybackRequiresUserGesture = false
+                    webViewClient = android.webkit.WebViewClient()
                     loadUrl(url)
                 }
             },

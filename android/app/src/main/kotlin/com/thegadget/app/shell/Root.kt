@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -75,9 +78,21 @@ fun Root(app: AppState) {
 @Composable
 private fun Chrome(app: AppState, tokens: GadgetTokens) {
     val nav by app.nav.collectAsState()
+    val settings by app.settings.collectAsState()
+    val crash by app.crash.collectAsState()
     val activity = LocalContext.current as? android.app.Activity
     BackHandler {
         if (!nav.isEmpty) app.back() else activity?.finish()
+    }
+    // `ErrorBoundary` sits outermost: nothing can take the app to a blank screen.
+    crash?.let { msg ->
+        CrashCard(
+            message = msg,
+            tokens = tokens,
+            onReload = { app.clearCrash(); activity?.recreate() },
+            onReset = { app.resetAllData { app.clearCrash(); activity?.recreate() } },
+        )
+        return
     }
     BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black)) {
         val density = LocalDensity.current
@@ -87,10 +102,21 @@ private fun Chrome(app: AppState, tokens: GadgetTokens) {
         Backdrop(tokens)
         if (nav.isEmpty) {
             HubScreen(app, tokens)
+            // `html[data-boot=on]`: the ring/flash plays once per cold start, never with motion off.
+            var boot by remember { mutableStateOf(true) }
+            if (boot && settings.motionOn) {
+                BootOverlay()
+                LaunchedEffect(Unit) { kotlinx.coroutines.delay(1500); boot = false }
+            } else {
+                LaunchedEffect(Unit) { boot = false }
+            }
         } else {
             PageHost(app, nav.route!!, tokens)
         }
+        MiniPlayer(app, tokens, Modifier.align(Alignment.BottomCenter))
         ChromeBar(app, tokens)
+        if (settings.y2k) Y2kOverlay()
+        ToastHost(app, tokens, Modifier.align(Alignment.BottomCenter))
     }
 }
 
@@ -117,5 +143,6 @@ fun PageHost(app: AppState, route: Route, tokens: GadgetTokens) {
         is Route.Config -> ConfigScreen(app, tokens)
         is Route.Plugins -> PluginsScreen(app, tokens)
         is Route.PluginPage -> PluginPageScreen(app, route.id, tokens)
+        is Route.GameBrowser -> GameBrowserScreen(route.url, route.title, tokens)
     }
 }

@@ -35,6 +35,8 @@ sealed interface Route {
     data object Config : Route { override val name = "config" }
     data object Plugins : Route { override val name = "plugins" }
     data class PluginPage(val id: String) : Route { override val name = "plugin-page" }
+    /** An external, user-added web game, shown in an isolated WebView (the one sanctioned WebView use). */
+    data class GameBrowser(val url: String, val title: String) : Route { override val name = "game-browser" }
 }
 
 /** `routeKey()` — used as the Compose key so a route change animates a fresh view. */
@@ -47,6 +49,7 @@ fun Route.key(): String = when (this) {
     is Route.HomieEdit -> "homie-edit:${id ?: ""}"
     is Route.Chat -> "chat:$code"
     is Route.PluginPage -> "plugin-page:$id"
+    is Route.GameBrowser -> "game-browser:$url"
     else -> name
 }
 

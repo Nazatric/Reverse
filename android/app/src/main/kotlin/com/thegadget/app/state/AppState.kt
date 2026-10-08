@@ -37,6 +37,31 @@ class AppState(app: Application) : AndroidViewModel(app) {
     val best2048 = stores.best2048.stateIn(viewModelScope, SharingStarted.Eagerly, 0)
     val hostCode = stores.hostCode.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    /** `.toast` messages; each clears itself after the web's dwell time. */
+    private val _toasts = kotlinx.coroutines.flow.MutableStateFlow<List<String>>(emptyList())
+    val toasts: kotlinx.coroutines.flow.StateFlow<List<String>> get() = _toasts
+
+    fun toast(message: String) {
+        _toasts.value = _toasts.value + message
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(2600)
+            _toasts.value = _toasts.value.drop(1)
+        }
+    }
+
+    /** `gadget:crash` — set by the global handler, read by the crash card. */
+    val crash = stores.crash.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    fun clearCrash() = viewModelScope.launch { stores.setCrash(null) }.let { }
+
+    /** The crash card's "reset data": wipe the persisted state, then restart the process. */
+    fun resetAllData(onDone: () -> Unit) = viewModelScope.launch {
+        androidx.datastore.preferences.core.PreferenceDataStoreFactory.let { }
+        stores.clearAll()
+        metaDb.meta().clear()
+        onDone()
+    }.let { }
+
     private val _nav = kotlinx.coroutines.flow.MutableStateFlow(NavState())
     val nav: StateFlow<NavState> get() = _nav
 
@@ -219,6 +244,30 @@ class AppState(app: Application) : AndroidViewModel(app) {
     fun resetSettings() = viewModelScope.launch {
         stores.setSettings(com.thegadget.app.core.GadgetSettings())
     }.let { }
+
+    /**
+     * `navigate(page)` in the web app: a plugin's `page`/`url`-less button names either a built-in
+     * page or a page declared by that same plugin. Unknown names are ignored, exactly like the web.
+     */
+    fun openNamedPage(name: String) {
+        val builtin: Route? = when (name) {
+            "music" -> Route.Music
+            "albums" -> Route.Albums
+            "songs" -> Route.Songs
+            "playlists" -> Route.Playlists
+            "search" -> Route.Search
+            "now" -> Route.Now
+            "games" -> Route.Games
+            "2048" -> Route.Game2048
+            "homies" -> Route.Homies
+            "account" -> Route.Account
+            "settings" -> Route.Config
+            else -> null
+        }
+        if (builtin != null) { push(builtin); return }
+        val page = plugins.value.firstNotNullOfOrNull { rec -> rec.doc.pages.firstOrNull { it.id == name || it.label == name }?.let { rec.id to it.id } }
+        if (page != null) push(Route.PluginPage(page.second))
+    }
 
     fun push(route: Route, origin: Origin? = null, fromHub: Boolean = false) {
         _nav.value = NavStack.push(_nav.value, route, origin ?: _nav.value.origin, fromHub)
