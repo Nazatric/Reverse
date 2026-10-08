@@ -49,7 +49,6 @@ import com.thegadget.app.screens.HomieEditScreen
 import com.thegadget.app.screens.HomiesScreen
 import com.thegadget.app.screens.MusicHomeScreen
 import com.thegadget.app.screens.NowPlayingScreen
-import com.thegadget.app.screens.OnboardingScreen
 import com.thegadget.app.screens.PlaylistScreen
 import com.thegadget.app.screens.PlaylistsScreen
 import com.thegadget.app.screens.PluginPageScreen
@@ -78,7 +77,6 @@ private fun circleAt(cx: Float, cy: Float, r: Float): Shape = object : Shape {
 fun Root(app: AppState) {
     AppStateHolder.current = app
     val settings by app.settings.collectAsState()
-    val onboarded by app.onboarded.collectAsState()
     val crash by app.crash.collectAsState()
     val liveCrash = remember { mutableStateOf<String?>(null) }
 
@@ -105,11 +103,8 @@ fun Root(app: AppState) {
 
     CompositionLocalProvider(LocalTokens provides tokens) {
         Box(Modifier.fillMaxSize().background(Color.Black)) {
-            if (!onboarded) {
-                OnboardingScreen(app)
-            } else {
-                Chrome(app, tokens, settings)
-            }
+            // No onboarding gate: the app drops straight into the hub on first launch.
+            Chrome(app, tokens, settings)
         }
     }
 }

@@ -9,11 +9,12 @@
 set -uo pipefail
 
 VP="${1:-412x915}"
+TEST_CLASS="${2:-com.thegadget.app.parity.BootSmokeTest}"
 DEST="parity/out/native/$VP"
 
 cd android
 gradle --no-daemon :app:connectedDebugAndroidTest \
-  -Pandroid.testInstrumentationRunnerArguments.class=com.thegadget.app.parity.ParityCaptureTest \
+  -Pandroid.testInstrumentationRunnerArguments.class="$TEST_CLASS" \
   2>&1 | tee /tmp/instr.log
 RC="${PIPESTATUS[0]}"
 cd ..
@@ -22,6 +23,7 @@ mkdir -p "$DEST"
 adb pull /sdcard/Android/data/com.thegadget.app.debug/files/parity/. "$DEST/" >/dev/null 2>&1 || true
 
 N=$(find "$DEST" -name '*.png' 2>/dev/null | wc -l)
+grep -h "BOOT_OK" /tmp/instr.log 2>/dev/null | head -1 | sed 's/^/::notice::SMOKE /' || true
 echo "::notice::NATIVECAPTURE viewport=$VP png=$N gradle_rc=$RC"
 find "$DEST" -name '*.png' 2>/dev/null | sort | head -40
 

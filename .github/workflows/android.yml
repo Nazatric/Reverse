@@ -157,7 +157,7 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: "platform-tools platforms;android-36 build-tools;36.0.0 system-images;android-34;google_apis;x86_64"
+          packages: "platform-tools platforms;android-36 build-tools;36.0.0 system-images;android-30;default;x86_64"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -175,9 +175,9 @@ jobs:
       - name: Capture native screenshots
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          api-level: 30
           arch: x86_64
-          target: google_apis
+          target: default
           profile: pixel
           ram: 2048
           disable-animations: true
@@ -185,7 +185,7 @@ jobs:
           emulator-options: >-
             -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
             -no-metrics -no-jni -skin 412x915
-          script: bash .github/parity_native.sh 412x915
+          script: bash .github/parity_native.sh 412x915 com.thegadget.app.parity.BootSmokeTest
 
       - uses: actions/upload-artifact@v4
         if: always()
