@@ -55,7 +55,10 @@ jobs:
           # block into a single annotation (pipes as line breaks) to stay under the cap.
           BLOCK="$(tail -140 /tmp/build.log | tr '\n' '|' | tr -d '\r')"
           echo "::error::BUILDFAIL ${BLOCK}"
-          KERR="$(grep -E '^e: ' /tmp/build.log | head -300 | tr '\n' '|')"
+          STRIP="s#file:///home/runner/work/Reverse/Reverse/android/app/src/##"
+          CNT="$(grep -E '^e: ' /tmp/build.log | sed -E "$STRIP; s#:[0-9]+:[0-9]+.*##" | sort | uniq -c | tr '\n' '|')"
+          if [ -n "$CNT" ]; then echo "::error::FILECOUNTS ${CNT}"; fi
+          KERR="$(grep -E '^e: ' /tmp/build.log | sed -E "$STRIP" | head -120 | tr '\n' '|')"
           if [ -n "$KERR" ]; then echo "::error::KOTLIN ${KERR}"; fi
 
       - name: Upload APKs
