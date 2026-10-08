@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace = "com.thegadget.app"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.thegadget.app"
         minSdk = 26
-        targetSdk = 37
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
