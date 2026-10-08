@@ -87,3 +87,48 @@ jobs:
           name: unit-test-results
           path: android/app/build/test-results/**/*.xml
           if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------------
+  # The reference half of the visual parity pipeline: build the *production* web
+  # app, render every screen in headless Chromium at the parity viewports, and
+  # publish the PNGs the native captures are diffed against.
+  # ---------------------------------------------------------------------------
+  parity-reference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install web dependencies
+        run: npm ci
+
+      - name: Build the web app
+        run: npm run build
+
+      - name: Install parity dependencies
+        working-directory: parity
+        run: npm ci
+
+      - name: Capture reference screenshots
+        working-directory: parity
+        run: node web/capture.mjs 2>&1 | tee /tmp/capture.log; exit "${PIPESTATUS[0]}"
+
+      - name: Report the capture
+        if: always()
+        run: |
+          echo "::notice::CAPTURE $(find parity/out -name '*.png' 2>/dev/null | wc -l) png files"
+          find parity/out -name '*.png' 2>/dev/null | sort | head -40
+          if [ -s /tmp/capture.log ]; then
+            echo "::error::CAPTURELOG $(tail -40 /tmp/capture.log | tr '\n' '|' | tr -d '\r')"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: parity-reference
+          path: parity/out
+          if-no-files-found: warn
