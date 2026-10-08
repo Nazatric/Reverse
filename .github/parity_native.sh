@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
-# Runs the parity capture harness on the booted emulator and pulls the PNGs off it.
+# Runs an instrumentation test on the booted emulator, bounded so the job can always report.
 #
-# The harness writes one PNG per screen into the app's external files dir; those are pulled into
-# parity/out/native/<viewport>/ so `parity/compare.mjs` can diff them against the web reference.
-#
-# Deliberately tolerant: a harness failure still reports what it produced, because the interesting
-# output is the count and the log, not the exit code.
+# On any outcome it dumps logcat (which carries the full ANR trace) and the gradle log as
+# annotations, because that is the only ground truth reachable from the authoring network.
 set -uo pipefail
 
 VP="${1:-412x915}"
@@ -13,21 +10,29 @@ TEST_CLASS="${2:-com.thegadget.app.parity.BootSmokeTest}"
 DEST="parity/out/native/$VP"
 
 cd android
-gradle --no-daemon :app:connectedDebugAndroidTest \
+# Bound the test at 12 minutes so the job (35 min cap) always reaches the reporting below.
+timeout -k 60 720 gradle --no-daemon :app:connectedDebugAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class="$TEST_CLASS" \
   2>&1 | tee /tmp/instr.log
 RC="${PIPESTATUS[0]}"
 cd ..
 
+# Pull whatever the harness wrote.
 mkdir -p "$DEST"
 adb pull /sdcard/Android/data/com.thegadget.app.debug/files/parity/. "$DEST/" >/dev/null 2>&1 || true
-
 N=$(find "$DEST" -name '*.png' 2>/dev/null | wc -l)
-grep -h "BOOT_OK" /tmp/instr.log 2>/dev/null | head -1 | sed 's/^/::notice::SMOKE /' || true
-echo "::notice::NATIVECAPTURE viewport=$VP png=$N gradle_rc=$RC"
-find "$DEST" -name '*.png' 2>/dev/null | sort | head -40
 
-if [ "$N" -eq 0 ]; then
-  echo "::error::NATIVELOG $(tail -60 /tmp/instr.log | tr '\n' '|' | tr -d '\r')"
-  exit 1
+# The money: the ANR trace, if any, lives in logcat.
+adb logcat -d > /tmp/logcat.txt 2>/dev/null || true
+ANR="$(grep -A60 'ANR in' /tmp/logcat.txt | head -80 | tr '\n' '|' | tr -d '\r')"
+CRASH="$(grep -B2 -A25 'FATAL EXCEPTION' /tmp/logcat.txt | head -60 | tr '\n' '|' | tr -d '\r')"
+BOOT="$(grep -h 'BOOT_OK' /tmp/instr.log /tmp/logcat.txt 2>/dev/null | head -1)"
+
+echo "::notice::NATIVECAPTURE viewport=$VP png=$N gradle_rc=$RC boot=${BOOT:-none}"
+[ -n "$BOOT" ] && echo "::notice::SMOKE $BOOT"
+[ -n "$ANR" ] && echo "::error::ANRTRACE ${ANR:0:3800}"
+[ -n "$CRASH" ] && echo "::error::CRASHLOG ${CRASH:0:3800}"
+if [ -z "$ANR" ] && [ -z "$CRASH" ] && [ "$N" -eq 0 ]; then
+  echo "::error::INSTRLOG $(tail -50 /tmp/instr.log | tr '\n' '|' | tr -d '\r')"
 fi
+exit 0
