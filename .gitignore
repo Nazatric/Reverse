@@ -1,0 +1,7 @@
+node_modules/
+dist/
+parity/node_modules/
+parity/out/
+verification/.tmp/
+verification/vectors/
+toolchain/

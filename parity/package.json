@@ -1,0 +1,16 @@
+{
+  "name": "gadget-parity",
+  "private": true,
+  "type": "module",
+  "description": "Visual parity tooling for The Gadget: capture the web reference build and diff it against native Android screenshots.",
+  "scripts": {
+    "capture": "node web/capture.mjs",
+    "geometry": "node web/geometry.mjs",
+    "compare": "node compare.mjs"
+  },
+  "devDependencies": {
+    "@sparticuz/chromium": "^131.0.1",
+    "puppeteer-core": "^23.11.1",
+    "pngjs": "^7.0.0"
+  }
+}

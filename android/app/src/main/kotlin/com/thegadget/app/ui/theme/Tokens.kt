@@ -1,0 +1,155 @@
+package com.thegadget.app.ui.theme
+
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.thegadget.app.core.GadgetMetrics
+
+/**
+ * Every number here is a *measured* value, not a guess.
+ *
+ * Sources:
+ *   - `src/styles/*.css` — colours, radii, durations, the three easing curves.
+ *   - `parity/out/web/<viewport>/geometry.json` — the box of every element at each parity
+ *     viewport, produced by the harness from the running production build.
+ *   - `/android.icu/` — n/a.
+ *
+ * The reference stage is 736×736 (the web app's `--sw/--sh` design box); `u` is the scale factor
+ * from that stage to the current window, exactly as `computeMetrics()` defines it, so a layout
+ * expressed with these tokens lands on the same pixels the web app lands on.
+ */
+@Immutable
+data class GadgetColors(
+    val ink: Color = Color(0xFF050505),
+    val text: Color = Color(0xFFF2F2EF),
+    val dim: Color = Color(0xFFA9AAA6),
+    val faint: Color = Color(0xFF70716D),
+    val accent: Color = Color(0xFFE9F33F),
+    val glyph: Color = Color(0xFF383937),
+    val glyphHole: Color = Color(0xFF9A9B98),
+    val glyphDot: Color = Color(0xFFD2D3CF),
+    /** Default orb ramp — the four-stop chrome gradient from `ui.css` (`.orb`). */
+    val orb: List<Color> = listOf(
+        Color(0xFFF4F4F1),
+        Color(0xFF9FA0A0),
+        Color(0xFF3A3B3D),
+        Color(0xFF101012),
+    ),
+    val glassTop: Color = Color(0xB3FFFFFF),
+    val glassBottom: Color = Color(0x14FFFFFF),
+    val glassEdge: Color = Color(0x40FFFFFF),
+    val shadow: Color = Color(0xCC000000),
+)
+
+/** Motion tokens: the exact curves and durations from the stylesheet. */
+@Immutable
+data class GadgetMotion(
+    /** `--ease: cubic-bezier(0.16, 0.84, 0.24, 1)` */
+    val ease: List<Float> = listOf(0.16f, 0.84f, 0.24f, 1f),
+    /** `--ease-io: cubic-bezier(0.65, 0, 0.25, 1)` */
+    val easeIo: List<Float> = listOf(0.65f, 0f, 0.25f, 1f),
+    /** `--ease-spring: cubic-bezier(0.3, 1.4, 0.5, 1)` */
+    val easeSpring: List<Float> = listOf(0.3f, 1.4f, 0.5f, 1f),
+    val irisOpenMs: Int = 660,
+    val irisCloseMs: Int = 500,
+    val surfaceInMs: Int = 560,
+    val surfaceInDelayMs: Int = 100,
+    val viewMs: Int = 420,
+    val hubAwayMs: Int = 620,
+    val pageHoldMs: Int = 480,
+    val hoverBlipMs: Int = 100,
+    val tapClickMs: Int = 400,
+    val openPowerUpMs: Int = 200,
+    val closeJumpMs: Int = 180,
+    val confirmCoinMs: Int = 300,
+    val shakeHurtMs: Int = 220,
+    val nodeEntranceBaseMs: Int = 180,
+    val nodeEntranceStepMs: Int = 90,
+    val bootEntranceBaseMs: Int = 300,
+    val bootEntranceStepMs: Int = 80,
+    val chainSwayMs: Int = 9000,
+    val chainBranchDelayMs: Int = 1900,
+    /** `html[data-motion=off]` sets every animation to this: instant, not shortened. */
+    val motionOffMs: Int = 0,
+)
+
+/** Layout tokens. Sizes that depend on the window come from [GadgetMetrics]; these are fixed. */
+@Immutable
+data class GadgetDimens(
+    val miniHeight: Dp = 64.dp,
+    val chromeBase: Dp = 96.dp,
+    val irisBase: Float = 600f,
+    val blurRadius: Dp = 18.dp,
+    val focusRing: Dp = 2.dp,
+)
+
+@Immutable
+data class GadgetTokens(
+    val colors: GadgetColors = GadgetColors(),
+    val motion: GadgetMotion = GadgetMotion(),
+    val dimens: GadgetDimens = GadgetDimens(),
+    /** Live design tokens the Config sliders and plugin themes write. */
+    val orbScale: Float = 1f,
+    val hubScale: Float = 1f,
+    val chainScale: Float = 1f,
+    val labelScale: Float = 1f,
+    val glow: Float = 1f,
+)
+
+val LocalTokens = staticCompositionLocalOf { GadgetTokens() }
+
+/** Convenience: the device-pixel scale from the reference stage, as `--u` defines it. */
+val GadgetMetrics.unit: Float get() = u
+
+/**
+ * Typography. Orbitron carries the display voice (weights 400–900, 900 for hub labels and page
+ * titles), Exo 2 the body copy (300–700) — the two families the web app loads, with the same
+ * weight ranges.
+ */
+/** Typography helpers that need the live scale factor. */
+object GadgetType {
+    fun hubLabelSize(u: Float, labelScale: Float): Float = maxOf(12f, 18f * u * labelScale)
+    fun pageTitleSize(u: Float): Float = maxOf(24f, 44f * u)
+    fun pageSubSize(u: Float): Float = maxOf(12f, 15f * u)
+}
+
+val WeightBlack = FontWeight.Black
+val WeightBold = FontWeight.Bold
+val WeightSemi = FontWeight.SemiBold
+val WeightMedium = FontWeight.Medium
+val WeightLight = FontWeight.Light
+
+/** `--gutter: max(18px, calc(40 * var(--u, 1px)))` */
+fun gutter(u: Float): Dp = maxOf(18f, 40f * u).dp
+
+/** `--sat` handled as a window inset in Compose; `--chrome-h: calc(var(--sat) + 96px)`. */
+fun chromeHeight(u: Float, topInset: Dp): Dp = topInset + 96.dp
+
+/* ------------------------------------------------------------------ canvas helpers */
+
+/**
+ * The orb gradient (`.orb`): a chrome ball lit from the top-left, drawn as a radial gradient
+ * offset to 32%/26% like the CSS `radial-gradient(120% 120% at 32% 26%, …)`.
+ */
+fun orbBrush(colors: List<Color>, size: Float) =
+    androidx.compose.ui.graphics.Brush.radialGradient(
+        colors = colors,
+        center = Offset(size * 0.32f, size * 0.26f),
+        radius = size * 1.2f,
+    )
+
+/** Offsets for the four-stop orb ramp at a given t (mirrors the CSS gradient stops). */
+fun orbStops(): List<Float> = listOf(0f, 0.34f, 0.68f, 1f)
+
+/** The soft "glass" hairline: 1px white at 25% used on almost every surface. */
+val GlassEdgeWidth: Float = 1f
+
+/** Dotted/dashed helpers used by the chains and the empty states. */
+fun dashed(effect: Float = 6f, gap: Float = 4f) = PathEffect.dashPathEffect(floatArrayOf(effect, gap))

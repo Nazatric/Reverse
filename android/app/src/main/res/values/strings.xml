@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">the gadget</string>
+    <!-- The onboarding + error copy is the web app's, verbatim. -->
+    <string name="onboard_kicker">the gadget</string>
+    <string name="onboard_title">who\'s using the hub?</string>
+    <string name="onboard_field">your username</string>
+    <string name="onboard_start">start the hub</string>
+    <string name="onboard_note">stays on this device</string>
+    <string name="error_title">something broke</string>
+    <string name="error_reload">reload</string>
+    <string name="error_reset">reset data</string>
+    <string name="playback_channel">Now playing</string>
+    <string name="playback_channel_desc">Shows the current track and its controls.</string>
+</resources>
