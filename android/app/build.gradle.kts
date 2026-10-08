@@ -20,6 +20,9 @@ android {
         // Same promise as the web app: everything happens on device.
         resourceConfigurations += listOf("en")
         vectorDrawables.useSupportLibrary = true
+
+        // The parity screenshot harness runs as an instrumentation test.
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
