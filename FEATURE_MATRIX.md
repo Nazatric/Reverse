@@ -124,10 +124,11 @@ and passed unit tests. It does **not** mean pixel parity has been measured — s
 These are the things the web app does that this port does **not** yet do. They are listed rather
 than glossed over, and none of them is claimed as parity anywhere in this repository.
 
-1. **Visual parity is unmeasured.** `parity/compare.mjs` and the instrumented capture harness exist,
-   but no reference/native/diff/overlay PNG set has been produced, so no screen is verified
-   pixel-for-pixel. Screen layouts use the token system and CSS-derived values, but per-component
-   spacing and typography have not been diffed.
+1. **Visual parity is unmeasured.** The reference half works: CI produces **104 web screenshots**
+   (412×915 and 844×390) as the `parity-reference` artifact. The native half does not — the emulator
+   job has not completed a capture — so no `diff.png`/`overlay.png` set exists and no screen has been
+   verified pixel-for-pixel. Screen layouts use the token system and CSS-derived values, but
+   per-component spacing and typography have not been diffed.
 2. **The UI sounds are synthesised, not sampled.** `core/Sfxr.kt` ports the SFXR generator and the
    six jsfxr presets the web uses, at the web's volumes and haptic patterns. The web draws its
    randomness from `Math.random()`, so it renders a different variant of each preset on every page

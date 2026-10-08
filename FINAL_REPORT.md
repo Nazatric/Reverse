@@ -118,12 +118,16 @@ fixed, and `each direction compacts toward its own edge` now pins all four direc
 
 **None measured.** This is the biggest honest gap.
 
-- The tooling exists: `parity/web/capture.mjs` (reference PNGs from headless Chromium),
-  `android/app/src/androidTest/.../ParityCaptureTest.kt` (native PNGs, frozen clock
-  `1790000400000`, seeded storage, 400 ms settle) and `parity/compare.mjs` (produces
-  `reference.png` / `native.png` / `diff.png` / `overlay.png` plus a mismatch table).
-- No capture has been run, so there is **no** `diff.png` set and no per-screen mismatch numbers to
-  report. `parity/out/` is empty.
+- The tooling exists and **the reference half now runs in CI**: the `parity-reference` job builds
+  the production web app, renders it in headless Chromium, and produces **104 reference PNGs**
+  across two viewports (412×915 portrait and 844×390 landscape), published as the
+  `parity-reference` artifact. That job is green.
+- The **native half does not yet produce images.** The `parity-native` job boots an emulator with
+  KVM and runs `ParityCaptureTest`; its first attempt ran the full 60-minute job limit and was
+  cancelled during emulator boot (software rendering on a hosted runner). It is now capped at 35
+  minutes with a 10-minute boot timeout and marked non-blocking, but as of this report it has not
+  successfully emitted a PNG.
+- Consequently there is **no** `diff.png` set and **no per-screen mismatch numbers** to report.
 - What *is* true: the design tokens are derived from the CSS rather than eyeballed (stage metrics,
   `--u`, orb/chain/label scales, `--ease` curves, the `.mini` capsule dimensions, the `.y2k-fx`
   rasters, the boot ring timings, the glyph and wireframe stroke values), the hub/backdrop geometry
