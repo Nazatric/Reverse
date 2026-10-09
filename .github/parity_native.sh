@@ -33,6 +33,8 @@ echo "::notice::NATIVECAPTURE viewport=$VP png=$N gradle_rc=$RC boot=${BOOT:-non
 [ -n "$BOOT" ] && echo "::notice::SMOKE $BOOT"
 GRID="$(grep -h 'HUBGRID|' /tmp/instr.log /tmp/logcat.txt 2>/dev/null | head -1 | sed 's/.*HUBGRID|//')"
 [ -n "$GRID" ] && echo "::notice::HUBGRID $GRID"
+PIX="$(grep -h 'PIXPROBE|' /tmp/instr.log /tmp/logcat.txt 2>/dev/null | head -1 | sed 's/.*PIXPROBE|//')"
+[ -n "$PIX" ] && echo "::notice::PIXPROBE $PIX"
 [ -n "$ANR" ] && echo "::error::ANRTRACE ${ANR:0:3800}"
 [ -n "$CRASH" ] && echo "::error::CRASHLOG ${CRASH:0:3800}"
 if [ -z "$ANR" ] && [ -z "$CRASH" ] && [ "$N" -eq 0 ]; then

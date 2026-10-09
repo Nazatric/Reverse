@@ -45,6 +45,23 @@ class BootSmokeTest {
         // One logcat message (not one per row): logcat drops individual lines under load, which
         // corrupted the grid. 40x89 chars is under logcat's ~4 KiB per-message cap.
         println("HUBGRID|" + grid.joinToString("|"))
+        // Ground-truth pixel probe: sample the actual rendered colour at the mascot and node centres
+        // so we know whether the fills are present (yellow mascot, glass orbs) or rendering black.
+        val m = com.thegadget.app.core.GadgetMetrics.compute(shot.width.toFloat(), shot.height.toFloat())
+        fun hex(px: Int) = String.format("#%06X", px and 0xFFFFFF)
+        fun at(px: Float, py: Float) = hex(
+            shot.getPixel(px.toInt().coerceIn(0, shot.width - 1), py.toInt().coerceIn(0, shot.height - 1)),
+        )
+        val probe = listOf(
+            "hub" to at(m.stageX(49.5f), m.stageY(52f)),
+            "music" to at(m.stageX(18.5f), m.stageY(22.8f)),
+            "games" to at(m.stageX(74.6f), m.stageY(31.1f)),
+            "config" to at(m.stageX(77.6f), m.stageY(65.5f)),
+            "homies" to at(m.stageX(27.2f), m.stageY(73.8f)),
+            "account" to at(m.stageX(53f), m.stageY(79.5f)),
+            "bg" to at(m.stageX(2f), m.stageY(50f)),
+        ).joinToString(" ") { "${it.first}=${it.second}" }
+        println("PIXPROBE|u=${"%.3f".format(m.u)} fx=${m.fx.toInt()} fy=${m.fy.toInt()} $probe")
         println("BOOT_OK state=${scenario.state} png=${shot.width}x${shot.height}")
         scenario.close()
     }
