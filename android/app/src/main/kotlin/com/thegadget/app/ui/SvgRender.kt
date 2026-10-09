@@ -163,7 +163,10 @@ private fun DrawScope.drawPainted(
     if (strokeSpec != null && strokeSpec != "none" && strokeW != null) {
         val paint = Paint()
         paint.style = PaintingStyle.Stroke
-        paint.strokeWidth = if (style?.nonScalingStroke == true) strokeW else strokeW * strokeScale
+        // vector-effect:non-scaling-stroke keeps the stroke at strokeW *device* px regardless of the
+        // canvas scale; since we draw under the group's scaled canvas, divide by that scale so the
+        // on-screen width is strokeW (previously it was strokeW*scale — sub-0.8px for the wireframe).
+        paint.strokeWidth = if (style?.nonScalingStroke == true) strokeW / strokeScale else strokeW * strokeScale
         paint.alpha = opacity * (el.strokeOpacity?.toFloatOrNull() ?: 1f)
         paint.strokeCap = cap(el.strokeLinecap ?: group.strokeLinecap)
         paint.strokeJoin = join(el.strokeLinejoin ?: group.strokeLinejoin)

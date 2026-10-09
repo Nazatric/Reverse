@@ -19,11 +19,22 @@ port mirrors it. Format follows [Keep a Changelog](https://keepachangelog.com/).
 - **Node/mascot taps**: the hub `Canvas` had no pointer handling, so the buttons did nothing. Added
   `detectTapGestures` hit-testing (expanded targets) for all five nodes, plugin nodes and the mascot;
   node tap → `Fx.open()` + push, mascot tap → Now-Playing (or Music) per `Hub.tsx`.
+- **Mascot**: the hub drew the *bare* face; the web hub renders the full `<Mascot />` (bezel ring +
+  face). Now `bare = false`.
+
+### Verified on CI (emulator, `BOOT_OK`, run 37889582700)
+- `PIXPROBE u=0.672 fx=0 fy=35` matches the `metrics.ts` formulas exactly for a 412×915 stage.
+- Pixel samples: `hub=#F9F9F9` (mascot lens-flare), `music=#ADADAA` (glass orb), `bg=#131514`
+  (backdrop) — hub, mascot and nodes all render and are correctly positioned.
+- **Known remaining gap (not yet at parity)**: the native hub reads dimmer/sparser than the web
+  reference in the ASCII grid — the wireframe mesh and the orbs'/mascot's outer glow (bloom) are
+  under-rendered versus `hub.css`. Layout, proportions and interaction are correct; luminous finish
+  is the outstanding difference.
 
 ### Added — text parity probe
-- `parity/web/ascii.mjs` and the boot harness downsample the hub to a comparable ASCII luminance grid,
-  emitted as `REFGRID`/`HUBGRID` annotations, so native-vs-reference layout can be diffed as text from
-  the artifact-store-blocked authoring network.
+- `parity/web/ascii.mjs` and the boot harness downsample the hub to a comparable ASCII luminance grid
+  (`REFGRID`/`HUBGRID`) and sample centre pixels (`PIXPROBE`), so native-vs-reference layout and
+  colour can be checked as text from the artifact-store-blocked authoring network.
 
 ## [0.1] — 2026-10-08
 
