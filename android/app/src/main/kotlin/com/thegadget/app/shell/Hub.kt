@@ -152,7 +152,8 @@ fun Hub(
                 },
         ) {
             drawChains(geometry, tokens, swayPhase)
-            mascotFace(geometry.hubCenter, geometry.hubSize / 2f, yellow = true)
+            // The web hub renders the full <Mascot /> (bezel ring + face); only the pill uses `bare`.
+            mascotFace(geometry.hubCenter, geometry.hubSize / 2f, yellow = true, bare = false)
             for ((spec, box) in geometry.nodes) drawNode(spec, box, tokens, measurer, labelStyle)
             for ((spec, i, box) in pluginBoxes) drawNode(spec, box, tokens, measurer, labelStyle, pluginIndex = i)
         }
