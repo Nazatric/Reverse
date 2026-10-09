@@ -42,7 +42,9 @@ class BootSmokeTest {
         // and adb pull from Android/data is blocked on API 30 — but println reaches logcat).
         val grid = asciiGrid(shot, 40)
         File(dir, "hub-grid.txt").writeText(grid.joinToString("\n"))
-        for (line in grid) println("HUBGRID_ROW|$line")
+        // One logcat message (not one per row): logcat drops individual lines under load, which
+        // corrupted the grid. 40x89 chars is under logcat's ~4 KiB per-message cap.
+        println("HUBGRID|" + grid.joinToString("|"))
         println("BOOT_OK state=${scenario.state} png=${shot.width}x${shot.height}")
         scenario.close()
     }

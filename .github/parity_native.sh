@@ -31,7 +31,7 @@ BOOT="$(grep -h 'BOOT_OK' /tmp/instr.log /tmp/logcat.txt 2>/dev/null | head -1)"
 
 echo "::notice::NATIVECAPTURE viewport=$VP png=$N gradle_rc=$RC boot=${BOOT:-none}"
 [ -n "$BOOT" ] && echo "::notice::SMOKE $BOOT"
-GRID="$(grep -h 'HUBGRID_ROW|' /tmp/instr.log /tmp/logcat.txt 2>/dev/null | sed 's/.*HUBGRID_ROW|//' | tr '\n' '|')"
+GRID="$(grep -h 'HUBGRID|' /tmp/instr.log /tmp/logcat.txt 2>/dev/null | head -1 | sed 's/.*HUBGRID|//')"
 [ -n "$GRID" ] && echo "::notice::HUBGRID $GRID"
 [ -n "$ANR" ] && echo "::error::ANRTRACE ${ANR:0:3800}"
 [ -n "$CRASH" ] && echo "::error::CRASHLOG ${CRASH:0:3800}"
