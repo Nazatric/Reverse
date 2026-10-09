@@ -371,10 +371,15 @@ class CoreParityTest {
     }
 
     @Test
-    fun `stage coordinates are a percentage of the stage, not the window`() {
+    fun `stage coordinates are a percentage of the stage, offset by the frame origin`() {
         val m = GadgetMetrics.compute(390f, 844f)
-        assertEquals(m.sw * 0.495f, m.stageX(49.5f), 0.001f)
-        assertEquals(m.sh * 0.52f, m.stageY(52f), 0.001f)
+        // The web composes inside `.frame { left: var(--fx); top: var(--fy); w/h }`, so a node's
+        // centre is `fx + x% * sw` / `fy + y% * sh` — NOT a bare percentage of the window.
+        assertEquals(m.fx + m.sw * 0.495f, m.stageX(49.5f), 0.001f)
+        assertEquals(m.fy + m.sh * 0.52f, m.stageY(52f), 0.001f)
+        // fx/fy are the centring offsets of the stage within the window.
+        assertEquals((m.w - m.sw) / 2f, m.fx, 0.001f)
+        assertEquals((m.h - m.sh) / 2f, m.fy, 0.001f)
     }
 
     /* ------------------------------------------------------------------ ids and svg */

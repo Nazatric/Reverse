@@ -37,7 +37,26 @@ class BootSmokeTest {
         FileOutputStream(File(dir, "boot-smoke.png")).use { out ->
             shot.compress(Bitmap.CompressFormat.PNG, 100, out)
         }
+        // Also write an ASCII luminance grid of the hub so CI can compare the native layout against
+        // the web reference as text (the artifact blob store is unreachable from the authoring net).
+        File(dir, "hub-grid.txt").writeText(asciiGrid(shot, 46).joinToString("\n"))
         println("BOOT_OK state=${scenario.state} png=${shot.width}x${shot.height}")
         scenario.close()
+    }
+
+    /** Downsample to a cols-wide ASCII luminance grid, matching parity/web/ascii.mjs. */
+    private fun asciiGrid(src: Bitmap, cols: Int): List<String> {
+        val rows = Math.max(8, Math.round(cols.toFloat() * src.height / src.width))
+        val small = Bitmap.createScaledBitmap(src, cols, rows, true)
+        val ramp = " .:-=+*#%@"
+        return (0 until rows).map { r ->
+            buildString {
+                for (c in 0 until cols) {
+                    val p = small.getPixel(c, r)
+                    val lum = ((p shr 16 and 0xFF) * 299 + (p shr 8 and 0xFF) * 587 + (p and 0xFF) * 114) / 1000
+                    append(ramp[(lum * ramp.length / 256).coerceIn(0, ramp.length - 1)])
+                }
+            }
+        }.also { if (small != src) small.recycle() }
     }
 }
