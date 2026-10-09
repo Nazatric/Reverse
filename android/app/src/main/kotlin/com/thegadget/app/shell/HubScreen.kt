@@ -52,6 +52,7 @@ fun HubScreen(app: AppState, tokens: GadgetTokens, modifier: Modifier = Modifier
             geometry = geometry,
             pluginNodes = pluginNodes,
             onNodeTap = { spec, center, size ->
+                com.thegadget.app.ui.Fx.open()
                 val route = if (spec.pluginId != null) Route.PluginPage(spec.pluginId!!) else when (spec.id) {
                     com.thegadget.app.core.HubNodeId.MUSIC -> Route.Music
                     com.thegadget.app.core.HubNodeId.GAMES -> Route.Games
@@ -60,6 +61,15 @@ fun HubScreen(app: AppState, tokens: GadgetTokens, modifier: Modifier = Modifier
                     com.thegadget.app.core.HubNodeId.ACCOUNT -> Route.Account
                 }
                 app.push(route, origin = com.thegadget.app.core.Origin(center.x, center.y, size / 2f), fromHub = true)
+            },
+            onHubTap = { center, r ->
+                com.thegadget.app.ui.Fx.open()
+                val hasTrack = app.player.state.value.current != null
+                app.push(
+                    if (hasTrack) Route.Now else Route.Music,
+                    origin = com.thegadget.app.core.Origin(center.x, center.y, r),
+                    fromHub = true,
+                )
             },
         )
     }

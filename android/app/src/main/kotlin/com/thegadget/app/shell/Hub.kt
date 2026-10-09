@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -93,6 +95,7 @@ fun Hub(
     geometry: HubGeometry,
     pluginNodes: List<HubNodeSpec>,
     onNodeTap: (HubNodeSpec, Offset, Float) -> Unit,
+    onHubTap: (Offset, Float) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
     swayPhase: Float = 0f,
 ) {
@@ -106,20 +109,52 @@ fun Hub(
     }
 
     BoxWithConstraints(modifier.fillMaxSize()) {
-        Canvas(Modifier.fillMaxSize()) {
-            drawChains(geometry, tokens, swayPhase)
-            mascotFace(geometry.hubCenter, geometry.hubSize / 2f, yellow = true)
-            for ((spec, box) in geometry.nodes) drawNode(spec, box, tokens, measurer, labelStyle)
-            for ((i, spec) in pluginNodes.withIndex()) {
-                val size = orbSize(spec.d, geometry.metrics.u, tokens.orbScale, floor = 54f)
-                val box = Rect(
+        // Compute plugin boxes once so drawing and hit-testing agree exactly.
+        val pluginBoxes = pluginNodes.mapIndexed { i, spec ->
+            val size = orbSize(spec.d, geometry.metrics.u, tokens.orbScale, floor = 54f)
+            Triple(
+                spec,
+                i,
+                Rect(
                     left = geometry.metrics.stageX(spec.x) - size / 2f,
                     top = geometry.metrics.stageY(spec.y) - size / 2f,
                     right = geometry.metrics.stageX(spec.x) + size / 2f,
                     bottom = geometry.metrics.stageY(spec.y) + size / 2f,
-                )
-                drawNode(spec, box, tokens, measurer, labelStyle, pluginIndex = i)
-            }
+                ),
+            )
+        }
+        fun hit(pos: Offset, box: Rect): Boolean =
+            (pos - box.center).getDistance() <= (box.width / 2f) * 1.18f // invisible expanded target
+
+        Canvas(
+            Modifier
+                .fillMaxSize()
+                .pointerInput(geometry, pluginNodes) {
+                    detectTapGestures { pos ->
+                        val hubR = geometry.hubSize / 2f
+                        if ((pos - geometry.hubCenter).getDistance() <= hubR * 1.05f) {
+                            onHubTap(geometry.hubCenter, hubR)
+                            return@detectTapGestures
+                        }
+                        for ((spec, _, box) in pluginBoxes) {
+                            if (hit(pos, box)) {
+                                onNodeTap(spec, box.center, box.width)
+                                return@detectTapGestures
+                            }
+                        }
+                        for ((spec, box) in geometry.nodes) {
+                            if (hit(pos, box)) {
+                                onNodeTap(spec, box.center, box.width)
+                                return@detectTapGestures
+                            }
+                        }
+                    }
+                },
+        ) {
+            drawChains(geometry, tokens, swayPhase)
+            mascotFace(geometry.hubCenter, geometry.hubSize / 2f, yellow = true)
+            for ((spec, box) in geometry.nodes) drawNode(spec, box, tokens, measurer, labelStyle)
+            for ((spec, i, box) in pluginBoxes) drawNode(spec, box, tokens, measurer, labelStyle, pluginIndex = i)
         }
     }
 }
@@ -222,8 +257,10 @@ private fun DrawScope.drawNode(
     if (spec.label.isNotEmpty()) {
         val u = size / (spec.d * tokens.orbScale) // recover u for this node
         val ly = spec.ly * u
-        val fontSize = GadgetType.hubLabelSize(u, tokens.labelScale)
-        val measured = measurer.measure(spec.label, labelStyle.copy(fontSize = fontSize.sp))
+        // hubLabelSize yields CSS px. Compose resolves .sp by multiplying the device density back
+        // on, so feed it px/density (Float.toSp() alone would NOT do this and would inflate).
+        val fontSizeSp = (GadgetType.hubLabelSize(u, tokens.labelScale) / density).sp
+        val measured = measurer.measure(spec.label, labelStyle.copy(fontSize = fontSizeSp))
         val cx = box.center.x
         val cy = box.bottom + ly + measured.size.height / 2f
         withTransform({
@@ -237,7 +274,7 @@ private fun DrawScope.drawNode(
             drawText(
                 textMeasurer = measurer,
                 text = spec.label,
-                style = labelStyle.copy(fontSize = fontSize.sp, color = Color(0xFFF6F6F3)),
+                style = labelStyle.copy(fontSize = fontSizeSp, color = Color(0xFFF6F6F3)),
                 topLeft = Offset(cx - measured.size.width / 2f, cy - measured.size.height / 2f),
             )
         }
@@ -277,13 +314,16 @@ private fun DrawScope.drawChains(geometry: HubGeometry, tokens: GadgetTokens, ph
         rotate(degrees = branchAngle * 180f / PI.toFloat() + sway * 180f / PI.toFloat(), pivot = hub) {
             val x0 = hub.x
             val y0 = hub.y - thickness / 2f
+            // The tile is authored 64x40 and drawn at s=thickness/40, so its on-screen width is
+            // TILE_W*s; step by that (not the raw 64) or tiles overlap and clip into fragments.
+            val step = TILE_W * (thickness / TILE_H)
             var x = 0f
             while (x < length) {
-                val w = min(TILE_W, length - x)
+                val w = min(step, length - x)
                 translate(left = x0 + x, top = y0) {
                     clipRect(0f, 0f, w, thickness) { drawChainTile(thickness) }
                 }
-                x += TILE_W
+                x += step
             }
         }
     }

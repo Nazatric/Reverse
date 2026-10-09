@@ -23,9 +23,14 @@ data class GadgetMetrics(
     val u: Float,
     val portrait: Boolean,
 ) {
-    /** The web app treats the stage as a 736-unit canvas. */
-    fun stageX(percent: Float): Float = percent / 100f * sw
-    fun stageY(percent: Float): Float = percent / 100f * sh
+    /**
+     * The web positions everything inside `.frame { left: var(--fx); top: var(--fy);
+     * width: var(--sw); height: var(--sh) }`, so a node's centre in screen pixels is
+     * `fx + x% * sw` / `fy + y% * sh`. Omitting the offsets pinned the cluster to the top-left
+     * on tall screens — the dominant layout bug.
+     */
+    fun stageX(percent: Float): Float = fx + percent / 100f * sw
+    fun stageY(percent: Float): Float = fy + percent / 100f * sh
 
     companion object {
         const val REFERENCE = 736f

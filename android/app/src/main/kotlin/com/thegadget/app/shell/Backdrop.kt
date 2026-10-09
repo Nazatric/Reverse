@@ -36,11 +36,13 @@ fun Backdrop(tokens: GadgetTokens, modifier: Modifier = Modifier) {
     Box(modifier.fillMaxSize()) {
         Canvas(Modifier.fillMaxSize()) {
             drawRect(Brush.radialGradient(listOf(Color(0xFF1B1D1B), Color(0xFF06070A)), radius = size.maxDimension))
+            // `.wire` fills the centered `.frame` (fx, fy, sw, sh) — not the whole screen.
+            val m = com.thegadget.app.core.GadgetMetrics.compute(size.width, size.height)
             renderSvgGroup(
                 group = group,
                 palette = palette,
                 variant = "stroke",
-                dst = Rect(0f, 0f, size.width, size.height),
+                dst = Rect(m.fx, m.fy, m.fx + m.sw, m.fy + m.sh),
                 css = Css::wireElement,
             )
             drawRect(Brush.radialGradient(listOf(Color.Transparent, Color(0x66000000)), radius = size.maxDimension * 0.75f))
