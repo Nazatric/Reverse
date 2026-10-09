@@ -125,7 +125,7 @@ jobs:
           find parity/out -name '*.png' 2>/dev/null | sort | head -40
           HUB="$(ls parity/out/web/412x915/hub.png 2>/dev/null || ls parity/out/web/*/hub.png 2>/dev/null | head -1)"
           if [ -n "$HUB" ]; then
-            GRID="$(cd parity && node web/ascii.mjs "../$HUB" 46 2>/dev/null | tr '\n' '|')"
+            GRID="$(cd parity && node web/ascii.mjs "../$HUB" 40 2>/dev/null | tr '\n' '|')"
             [ -n "$GRID" ] && echo "::notice::REFGRID $GRID"
           fi
           if [ -s /tmp/capture.log ]; then

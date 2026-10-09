@@ -40,7 +40,7 @@ class BootSmokeTest {
         // Also emit an ASCII luminance grid of the hub so CI can compare the native layout against
         // the web reference as text (the artifact blob store is unreachable from the authoring net,
         // and adb pull from Android/data is blocked on API 30 — but println reaches logcat).
-        val grid = asciiGrid(shot, 46)
+        val grid = asciiGrid(shot, 40)
         File(dir, "hub-grid.txt").writeText(grid.joinToString("\n"))
         for (line in grid) println("HUBGRID_ROW|$line")
         println("BOOT_OK state=${scenario.state} png=${shot.width}x${shot.height}")

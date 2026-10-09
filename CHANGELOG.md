@@ -3,6 +3,28 @@
 All notable changes to the native Android port. The web app in `src/` is the source of truth; this
 port mirrors it. Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Fixed — hub visual + interaction parity (verified on CI emulator, run 37884765838)
+- **Stage centring**: `GadgetMetrics.stageX/stageY` now add the `fx`/`fy` frame offsets, matching the
+  web `.frame { left: var(--fx); top: var(--fy) }`. The cluster was pinned to the top-left on tall
+  screens; the hub now centres at ~51% height as in the reference.
+- **Node labels**: `hubLabelSize` yields CSS px but was passed as `.sp` (density-multiplied), so
+  labels were inflated and overlapped the orbs. They are now `px / density` sp.
+- **Wireframe**: fits the centred `.frame` rect (as `.wire` does) instead of the whole screen.
+- **Status chrome**: rebuilt to match `TopBar.tsx` — a right-aligned glass capsule (avatar, status
+  dot, name, clock) plus a separate top-left up-arrow, all sized from the live stage metrics.
+- **Chains**: the link tile is drawn at `s = thickness/40` but the loop advanced by a raw 64 px, so
+  links overlapped and clipped into fragments. It now advances by the scaled tile width.
+- **Node/mascot taps**: the hub `Canvas` had no pointer handling, so the buttons did nothing. Added
+  `detectTapGestures` hit-testing (expanded targets) for all five nodes, plugin nodes and the mascot;
+  node tap → `Fx.open()` + push, mascot tap → Now-Playing (or Music) per `Hub.tsx`.
+
+### Added — text parity probe
+- `parity/web/ascii.mjs` and the boot harness downsample the hub to a comparable ASCII luminance grid,
+  emitted as `REFGRID`/`HUBGRID` annotations, so native-vs-reference layout can be diffed as text from
+  the artifact-store-blocked authoring network.
+
 ## [0.1] — 2026-10-08
 
 First installable build of the native port. Everything is Kotlin + Jetpack Compose; the only WebView
