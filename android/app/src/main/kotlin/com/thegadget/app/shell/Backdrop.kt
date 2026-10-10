@@ -15,7 +15,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import com.thegadget.app.R
 import com.thegadget.app.core.Clock
 import com.thegadget.app.ui.SvgPalette
 import com.thegadget.app.ui.SvgPaths
@@ -33,9 +41,38 @@ import kotlin.math.sin
 fun Backdrop(tokens: GadgetTokens, modifier: Modifier = Modifier) {
     val group = SvgPaths.require("wire.Wireframe")
     val palette = SvgPalette(currentColor = Css.GLYPH, cssVar = Css::cssVar)
+    val atmosphere = imageResource(R.drawable.atmosphere)
+    // `.bg-photo`: grayscale, contrast 1.14, brightness 0.68, opacity .5, screen-blended.
+    val photoFilter = ColorFilter.colorMatrix(
+        ColorMatrix(
+            floatArrayOf(
+                0.1648f, 0.5544f, 0.0560f, 0f, -12.14f,
+                0.1648f, 0.5544f, 0.0560f, 0f, -12.14f,
+                0.1648f, 0.5544f, 0.0560f, 0f, -12.14f,
+                0f, 0f, 0f, 1f, 0f,
+            ),
+        ),
+    )
     Box(modifier.fillMaxSize()) {
         Canvas(Modifier.fillMaxSize()) {
-            drawRect(Brush.radialGradient(listOf(Color(0xFF1B1D1B), Color(0xFF06070A)), radius = size.maxDimension))
+            // --ink base
+            drawRect(Color(0xFF050505))
+            // .bg-photo (inset -5%, cover, screen)
+            val ox = (size.width * 0.05f).toInt()
+            val oy = (size.height * 0.05f).toInt()
+            drawImage(
+                image = atmosphere,
+                dstOffset = IntOffset(-ox, -oy),
+                dstSize = IntSize(size.width.toInt() + ox * 2, size.height.toInt() + oy * 2),
+                alpha = 0.5f,
+                colorFilter = photoFilter,
+                blendMode = BlendMode.Screen,
+            )
+            // .bg-glow: four broad radial light pools (exact CSS colours/stops).
+            bgPool(0.38f, 0.31f, 0.62f, 0.46f, Color(0x33C4C6C1), 0.70f)
+            bgPool(0.75f, 0.30f, 0.44f, 0.34f, Color(0x24A5A8A2), 0.70f)
+            bgPool(0.50f, 0.68f, 0.72f, 0.40f, Color(0x1A7A7C78), 0.72f)
+            bgPool(0.08f, 0.54f, 0.30f, 0.22f, Color(0x21BABCB7), 0.70f)
             // `.wire` fills the centered `.frame` (fx, fy, sw, sh) — not the whole screen.
             val m = com.thegadget.app.core.GadgetMetrics.compute(size.width, size.height)
             renderSvgGroup(
@@ -45,9 +82,40 @@ fun Backdrop(tokens: GadgetTokens, modifier: Modifier = Modifier) {
                 dst = Rect(m.fx, m.fy, m.fx + m.sw, m.fy + m.sh),
                 css = Css::wireElement,
             )
-            drawRect(Brush.radialGradient(listOf(Color.Transparent, Color(0x66000000)), radius = size.maxDimension * 0.75f))
+            // .bg-vignette
+            drawRect(
+                Brush.radialGradient(
+                    colorStops = arrayOf(
+                        0.38f to Color.Transparent,
+                        0.76f to Color.Black.copy(alpha = 0.55f),
+                        1f to Color.Black.copy(alpha = 0.92f),
+                    ),
+                    radius = size.maxDimension * 0.72f,
+                ),
+            )
         }
         Particles(tokens)
+    }
+}
+
+/** One `.bg-glow` radial pool: an ellipse (rx% x ry%) centred at (cx%, cy%), colour -> transparent. */
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.bgPool(
+    cx: Float, cy: Float, rxPct: Float, ryPct: Float, color: Color, stop: Float,
+) {
+    val rx = size.width * rxPct
+    val ry = size.height * ryPct
+    withTransform({
+        translate(size.width * cx, size.height * cy)
+        scale(1f, ry / rx, pivot = Offset.Zero)
+    }) {
+        drawCircle(
+            brush = Brush.radialGradient(
+                colorStops = arrayOf(0f to color, stop to Color.Transparent),
+                radius = rx,
+            ),
+            radius = rx,
+            center = Offset.Zero,
+        )
     }
 }
 
