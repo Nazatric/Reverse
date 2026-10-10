@@ -152,6 +152,7 @@ fun Hub(
                 },
         ) {
             drawChains(geometry, tokens, swayPhase)
+            drawHubGlow(geometry.hubCenter, geometry.hubSize, tokens.glow)
             // The web hub renders the full <Mascot /> (bezel ring + face); only the pill uses `bare`.
             mascotFace(geometry.hubCenter, geometry.hubSize / 2f, yellow = true, bare = false)
             for ((spec, box) in geometry.nodes) drawNode(spec, box, tokens, measurer, labelStyle)
@@ -230,6 +231,74 @@ fun DrawScope.drawOrb(center: Offset, size: Float) {
     )
 }
 
+/**
+ * `.node::before` (soft outer bloom) + `.node-halo` (rim light), drawn behind the orb body.
+ * Radii/stops are the exact CSS: ::before is inset -55% (radius 1.05*d) white .13 -> transparent 62%;
+ * halo is inset -15% (radius .65*d) with a bright band at the orb edge.
+ */
+private fun DrawScope.drawNodeGlow(center: Offset, size: Float, glow: Float) {
+    drawCircle(
+        brush = Brush.radialGradient(
+            colorStops = arrayOf(0f to Color.White.copy(alpha = 0.13f * glow), 0.62f to Color.Transparent),
+            center = center,
+            radius = size * 1.05f,
+        ),
+        radius = size * 1.05f,
+        center = center,
+    )
+    drawCircle(
+        brush = Brush.radialGradient(
+            colorStops = arrayOf(
+                0f to Color.Transparent,
+                0.74f to Color.Transparent,
+                0.768f to Color.White.copy(alpha = 0.72f),
+                0.81f to Color(0xFFEEF0EB).copy(alpha = 0.42f),
+                0.90f to Color(0xFFDFE0DA).copy(alpha = 0.15f),
+                1f to Color.Transparent,
+            ),
+            center = center,
+            radius = size * 0.65f,
+        ),
+        radius = size * 0.65f,
+        center = center,
+        alpha = (0.6f + 0.35f * glow).coerceIn(0f, 1f),
+    )
+}
+
+/** `.hub-mascot::before` (bloom) + `.hub-halo` (rim), drawn behind the mascot. Exact CSS stops. */
+private fun DrawScope.drawHubGlow(center: Offset, size: Float, glow: Float) {
+    drawCircle(
+        brush = Brush.radialGradient(
+            colorStops = arrayOf(
+                0f to Color.White.copy(alpha = 0.20f * glow),
+                0.40f to Color.White.copy(alpha = 0.06f * glow),
+                0.64f to Color.Transparent,
+            ),
+            center = center,
+            radius = size * 1.12f,
+        ),
+        radius = size * 1.12f,
+        center = center,
+    )
+    drawCircle(
+        brush = Brush.radialGradient(
+            colorStops = arrayOf(
+                0f to Color.Transparent,
+                0.83f to Color.Transparent,
+                0.855f to Color.White.copy(alpha = 0.78f),
+                0.91f to Color(0xFFEEF0EB).copy(alpha = 0.38f),
+                0.96f to Color(0xFFDCDED8).copy(alpha = 0.12f),
+                1f to Color.Transparent,
+            ),
+            center = center,
+            radius = size * 0.59f,
+        ),
+        radius = size * 0.59f,
+        center = center,
+        alpha = (0.55f + 0.4f * glow).coerceIn(0f, 1f),
+    )
+}
+
 private fun DrawScope.drawNode(
     spec: HubNodeSpec,
     box: Rect,
@@ -239,6 +308,7 @@ private fun DrawScope.drawNode(
     pluginIndex: Int = -1,
 ) {
     val size = box.width
+    drawNodeGlow(box.center, size, tokens.glow)
     drawOrb(box.center, size)
     // The glyph sits at 46% of the orb, tinted --glyph with the hole colour showing through.
     val glyphSize = size * 0.46f
