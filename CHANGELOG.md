@@ -21,15 +21,25 @@ port mirrors it. Format follows [Keep a Changelog](https://keepachangelog.com/).
   node tap → `Fx.open()` + push, mascot tap → Now-Playing (or Music) per `Hub.tsx`.
 - **Mascot**: the hub drew the *bare* face; the web hub renders the full `<Mascot />` (bezel ring +
   face). Now `bare = false`.
+- **Orb/mascot glow**: `.node::before` + `.node-halo` and `.hub-mascot::before` + `.hub-halo` (the soft
+  outer bloom and rim light) were not drawn at all. Added with the exact CSS radii/stops, scaled by
+  `--glow`. Verified: hub-grid ink rose and the orbs now read as filled, haloed spheres.
+- **Backdrop atmosphere**: the native backdrop was a flat dark wash. The web layers `--ink #050505`,
+  `atmosphere.jpg` (grayscale · contrast 1.14 · brightness 0.68 · opacity .5 · screen-blended), four
+  radial `.bg-glow` pools and `.bg-vignette`. Added all four layers (photo bundled as a nodpi drawable
+  and screen-blended; pools/vignette use the exact CSS colours and stops).
+- **Wireframe stroke**: `vector-effect: non-scaling-stroke` now divides by the canvas scale, so the
+  0.8px mesh renders at a true 0.8 device px (was ~0.63px under the 800×800→frame fit).
 
 ### Verified on CI (emulator, `BOOT_OK`, run 37889582700)
 - `PIXPROBE u=0.672 fx=0 fy=35` matches the `metrics.ts` formulas exactly for a 412×915 stage.
 - Pixel samples: `hub=#F9F9F9` (mascot lens-flare), `music=#ADADAA` (glass orb), `bg=#131514`
   (backdrop) — hub, mascot and nodes all render and are correctly positioned.
-- **Known remaining gap (not yet at parity)**: the native hub reads dimmer/sparser than the web
-  reference in the ASCII grid — the wireframe mesh and the orbs'/mascot's outer glow (bloom) are
-  under-rendered versus `hub.css`. Layout, proportions and interaction are correct; luminous finish
-  is the outstanding difference.
+- **Known remaining gap (not yet at parity)**: hub-grid content ink is 0.246 native vs 0.477
+  reference — the native backdrop sits about one luminance step darker than the web (the
+  screen-blended atmosphere + `.bg-glow` read slightly dimmer). Layout, proportions, orb/mascot
+  rendering and interaction are correct; the residual difference is background luminance, not
+  missing content.
 
 ### Added — text parity probe
 - `parity/web/ascii.mjs` and the boot harness downsample the hub to a comparable ASCII luminance grid
