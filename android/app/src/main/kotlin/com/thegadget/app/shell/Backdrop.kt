@@ -20,7 +20,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.drawscope.withTransform
-import androidx.compose.ui.res.imageResource
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import com.thegadget.app.R
@@ -41,7 +43,10 @@ import kotlin.math.sin
 fun Backdrop(tokens: GadgetTokens, modifier: Modifier = Modifier) {
     val group = SvgPaths.require("wire.Wireframe")
     val palette = SvgPalette(currentColor = Css.GLYPH, cssVar = Css::cssVar)
-    val atmosphere = imageResource(R.drawable.atmosphere)
+    val context = LocalContext.current
+    val atmosphere = remember {
+        android.graphics.BitmapFactory.decodeResource(context.resources, R.drawable.atmosphere).asImageBitmap()
+    }
     // `.bg-photo`: grayscale, contrast 1.14, brightness 0.68, opacity .5, screen-blended.
     val photoFilter = ColorFilter.colorMatrix(
         ColorMatrix(
