@@ -61,7 +61,18 @@ class BootSmokeTest {
             "account" to at(m.stageX(53f), m.stageY(79.5f)),
             "bg" to at(m.stageX(2f), m.stageY(50f)),
         ).joinToString(" ") { "${it.first}=${it.second}" }
+        // Same normalised backdrop points the reference probe samples, for a direct luminance diff.
+        fun np(nx: Float, ny: Float) = hex(
+            shot.getPixel((nx * shot.width).toInt().coerceIn(0, shot.width - 1), (ny * shot.height).toInt().coerceIn(0, shot.height - 1)),
+        )
+        val bgp = listOf(
+            "0.5,0.15" to np(0.5f, 0.15f), "0.10,0.45" to np(0.10f, 0.45f),
+            "0.90,0.45" to np(0.90f, 0.45f), "0.50,0.92" to np(0.50f, 0.92f),
+            "0.33,0.08" to np(0.33f, 0.08f), "0.67,0.08" to np(0.67f, 0.08f),
+            "0.15,0.85" to np(0.15f, 0.85f), "0.85,0.85" to np(0.85f, 0.85f),
+        ).joinToString(" ") { "${it.first}=${it.second}" }
         println("PIXPROBE|u=${"%.3f".format(m.u)} fx=${m.fx.toInt()} fy=${m.fy.toInt()} $probe")
+        println("NATPIX|$bgp")
         println("BOOT_OK state=${scenario.state} png=${shot.width}x${shot.height}")
         scenario.close()
     }

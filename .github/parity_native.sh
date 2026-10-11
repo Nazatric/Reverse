@@ -35,6 +35,8 @@ GRID="$(grep -h 'HUBGRID|' /tmp/instr.log /tmp/logcat.txt 2>/dev/null | head -1 
 [ -n "$GRID" ] && echo "::notice::HUBGRID $GRID"
 PIX="$(grep -h 'PIXPROBE|' /tmp/instr.log /tmp/logcat.txt 2>/dev/null | head -1 | sed 's/.*PIXPROBE|//')"
 [ -n "$PIX" ] && echo "::notice::PIXPROBE $PIX"
+NPIX="$(grep -h 'NATPIX|' /tmp/instr.log /tmp/logcat.txt 2>/dev/null | head -1 | sed 's/.*NATPIX|//')"
+[ -n "$NPIX" ] && echo "::notice::NATPIX $NPIX"
 [ -n "$ANR" ] && echo "::error::ANRTRACE ${ANR:0:3800}"
 [ -n "$CRASH" ] && echo "::error::CRASHLOG ${CRASH:0:3800}"
 if [ -z "$ANR" ] && [ -z "$CRASH" ] && [ "$N" -eq 0 ]; then
