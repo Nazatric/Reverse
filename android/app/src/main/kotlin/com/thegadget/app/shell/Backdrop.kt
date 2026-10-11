@@ -75,10 +75,12 @@ fun Backdrop(tokens: GadgetTokens, modifier: Modifier = Modifier) {
                 image = atmosphere,
                 dstOffset = IntOffset(((size.width - drawW) / 2f).toInt(), ((size.height - drawH) / 2f).toInt()),
                 dstSize = IntSize(drawW.toInt(), drawH.toInt()),
-                // CSS is `opacity:.5; mix-blend-mode:screen`, but over the near-black --ink base the
-                // browser's screen composite yields ~full photo luminance (REFPIX measured lum 151 at
-                // a bright spot — impossible under a literal 0.5 alpha). Calibrated to that render.
-                alpha = 1f,
+                // CSS is `opacity:.5; mix-blend-mode:screen`. Over the near-black --ink base the
+                // browser's screen composite does not halve the photo (REFPIX measured lum 151 at a
+                // bright spot — impossible under a literal 0.5). Screen over ~black is linear in
+                // alpha, so this is calibrated to the measured web render: 0.5 gave hub-grid ink
+                // 0.246, 1.0 gave 0.661, the reference is 0.477 -> alpha ~= 0.78.
+                alpha = 0.78f,
                 colorFilter = photoFilter,
                 blendMode = BlendMode.Screen,
             )
