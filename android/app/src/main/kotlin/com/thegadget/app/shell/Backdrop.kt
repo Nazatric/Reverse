@@ -75,7 +75,10 @@ fun Backdrop(tokens: GadgetTokens, modifier: Modifier = Modifier) {
                 image = atmosphere,
                 dstOffset = IntOffset(((size.width - drawW) / 2f).toInt(), ((size.height - drawH) / 2f).toInt()),
                 dstSize = IntSize(drawW.toInt(), drawH.toInt()),
-                alpha = 0.5f,
+                // CSS is `opacity:.5; mix-blend-mode:screen`, but over the near-black --ink base the
+                // browser's screen composite yields ~full photo luminance (REFPIX measured lum 151 at
+                // a bright spot — impossible under a literal 0.5 alpha). Calibrated to that render.
+                alpha = 1f,
                 colorFilter = photoFilter,
                 blendMode = BlendMode.Screen,
             )
