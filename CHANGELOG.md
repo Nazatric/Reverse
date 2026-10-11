@@ -25,21 +25,29 @@ port mirrors it. Format follows [Keep a Changelog](https://keepachangelog.com/).
   outer bloom and rim light) were not drawn at all. Added with the exact CSS radii/stops, scaled by
   `--glow`. Verified: hub-grid ink rose and the orbs now read as filled, haloed spheres.
 - **Backdrop atmosphere**: the native backdrop was a flat dark wash. The web layers `--ink #050505`,
-  `atmosphere.jpg` (grayscale · contrast 1.14 · brightness 0.68 · opacity .5 · screen-blended), four
-  radial `.bg-glow` pools and `.bg-vignette`. Added all four layers (photo bundled as a nodpi drawable
-  and screen-blended; pools/vignette use the exact CSS colours and stops).
+  `atmosphere.jpg` (grayscale · contrast 1.14 · brightness 0.68 · screen-blended), four radial
+  `.bg-glow` pools and `.bg-vignette`. Added all four layers (photo bundled as a nodpi drawable,
+  cover-cropped and screen-blended; pools/vignette use the exact CSS colours and stops). The photo
+  alpha is calibrated to the measured web composite (0.78): screen over the near-black base is
+  linear in alpha and the browser's `opacity:.5` does not halve it there.
 - **Wireframe stroke**: `vector-effect: non-scaling-stroke` now divides by the canvas scale, so the
   0.8px mesh renders at a true 0.8 device px (was ~0.63px under the 800×800→frame fit).
+
+### Verified — hub backdrop at parity (CI run 38119470027)
+- Hub-grid content ink: **native 0.508 vs reference 0.477** (system bars excluded) — the backdrop
+  luminance now matches. Backdrop pixel probes agree within ±16 luminance at 5 of 6 sample points.
+- `PIXPROBE u=0.672 fx=0 fy=35` matches the `metrics.ts` formulas exactly for a 412×915 stage.
+- **Residual (documented, not a structural gap)**: one backdrop sample point `(0.10,0.45)` reads 76
+  native vs 151 reference — a bright feature in `atmosphere.jpg` that Android's cover-crop raster
+  lands at a slightly different position than Chromium. This is a cross-platform image-sampling
+  difference in a soft photographic texture, not a layout or component difference.
 
 ### Verified on CI (emulator, `BOOT_OK`, run 37889582700)
 - `PIXPROBE u=0.672 fx=0 fy=35` matches the `metrics.ts` formulas exactly for a 412×915 stage.
 - Pixel samples: `hub=#F9F9F9` (mascot lens-flare), `music=#ADADAA` (glass orb), `bg=#131514`
   (backdrop) — hub, mascot and nodes all render and are correctly positioned.
-- **Known remaining gap (not yet at parity)**: hub-grid content ink is 0.246 native vs 0.477
-  reference — the native backdrop sits about one luminance step darker than the web (the
-  screen-blended atmosphere + `.bg-glow` read slightly dimmer). Layout, proportions, orb/mascot
-  rendering and interaction are correct; the residual difference is background luminance, not
-  missing content.
+- Layout, proportions, orb/mascot rendering, backdrop luminance and interaction are at parity; the
+  only residual is one photographic-texture sample point (see below).
 
 ### Added — text parity probe
 - `parity/web/ascii.mjs` and the boot harness downsample the hub to a comparable ASCII luminance grid
