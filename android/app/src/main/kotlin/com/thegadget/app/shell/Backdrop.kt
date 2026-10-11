@@ -62,13 +62,19 @@ fun Backdrop(tokens: GadgetTokens, modifier: Modifier = Modifier) {
         Canvas(Modifier.fillMaxSize()) {
             // --ink base
             drawRect(Color(0xFF050505))
-            // .bg-photo (inset -5%, cover, screen)
-            val ox = (size.width * 0.05f).toInt()
-            val oy = (size.height * 0.05f).toInt()
+            // .bg-photo: `background: center / cover` at inset -5%. Cover-crop (NOT stretch) so the
+            // same region of atmosphere.jpg lands at each screen point as in the browser.
+            val iw = atmosphere.width.toFloat()
+            val ih = atmosphere.height.toFloat()
+            val targetW = size.width * 1.1f
+            val targetH = size.height * 1.1f
+            val cover = maxOf(targetW / iw, targetH / ih)
+            val drawW = iw * cover
+            val drawH = ih * cover
             drawImage(
                 image = atmosphere,
-                dstOffset = IntOffset(-ox, -oy),
-                dstSize = IntSize(size.width.toInt() + ox * 2, size.height.toInt() + oy * 2),
+                dstOffset = IntOffset(((size.width - drawW) / 2f).toInt(), ((size.height - drawH) / 2f).toInt()),
+                dstSize = IntSize(drawW.toInt(), drawH.toInt()),
                 alpha = 0.5f,
                 colorFilter = photoFilter,
                 blendMode = BlendMode.Screen,
